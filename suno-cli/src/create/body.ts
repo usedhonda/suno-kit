@@ -37,8 +37,8 @@ export interface CreateBody {
   task?: "cover";
   persona_id: string | null;
   cover_clip_id: string | null;
-  cover_start_s: number | null;
-  cover_end_s: number | null;
+  cover_start_s?: number | null;
+  cover_end_s?: number | null;
   continue_clip_id: null;
   continue_at: null;
   continued_aligned_prompt: null;
@@ -89,8 +89,6 @@ export function buildCreateBody(input: CreateInput): CreateBody {
     override_fields: [],
     persona_id: input.personaId ?? null,
     cover_clip_id: input.coverClipId ?? null,
-    cover_start_s: input.coverStartS ?? null,
-    cover_end_s: input.coverEndS ?? null,
     continue_clip_id: null,
     continue_at: null,
     continued_aligned_prompt: null,
@@ -100,7 +98,14 @@ export function buildCreateBody(input: CreateInput): CreateBody {
     user_uploaded_images_b64: null,
     generation_type: "TEXT"
   };
-  if (input.coverClipId) body.task = "cover";
+  if (input.coverClipId) {
+    body.task = "cover";
+    if (input.coverStartS !== undefined) body.cover_start_s = input.coverStartS;
+    if (input.coverEndS !== undefined) body.cover_end_s = input.coverEndS;
+  } else {
+    body.cover_start_s = null;
+    body.cover_end_s = null;
+  }
   return body;
 }
 

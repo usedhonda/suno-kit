@@ -57,8 +57,8 @@ test("create dry-run maps cover clip id to live capture cover shape", async () =
   const metadata = output.json.body.metadata;
   assert.equal(output.code, 0);
   assert.equal(output.json.body.cover_clip_id, "CLIP123");
-  assert.equal(output.json.body.cover_start_s, null);
-  assert.equal(output.json.body.cover_end_s, null);
+  assert(!("cover_start_s" in output.json.body));
+  assert(!("cover_end_s" in output.json.body));
   assert.equal(output.json.body.task, "cover");
   assert.equal(metadata.create_mode, "custom");
   assert.equal(metadata.is_remix, true);
