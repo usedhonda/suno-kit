@@ -10,7 +10,9 @@ const CLIP_ID = "129414b4-1234-4567-8abc-1234567890ab";
 test("cookie missing returns JSON blocked_login without stack trace", async () => {
   const tempDir = await fsTempDir();
   const originalCookie = process.env.SUNO_KIT_COOKIE;
+  const originalJwt = process.env.SUNO_KIT_JWT;
   delete process.env.SUNO_KIT_COOKIE;
+  delete process.env.SUNO_KIT_JWT;
   try {
     const result = await captureStdout(() => cliMain(["status", CLIP_ID, "--data-dir", tempDir]));
     assert.equal(result.code, 30);
@@ -19,6 +21,7 @@ test("cookie missing returns JSON blocked_login without stack trace", async () =
     assert(!result.text.includes("at "));
   } finally {
     restoreEnv("SUNO_KIT_COOKIE", originalCookie);
+    restoreEnv("SUNO_KIT_JWT", originalJwt);
   }
 });
 
@@ -46,6 +49,47 @@ test("fetch reject returns stable retryable exit code and redacted output", asyn
     globalThis.fetch = originalFetch;
     restoreEnv("SUNO_KIT_COOKIE", originalCookie);
   }
+});
+
+test("SUNO_KIT_JWT status skips Clerk client and uses direct bearer", async () => {
+  const tempDir = await fsTempDir();
+  const jwt = makeJwt({ sid: "sess_direct" });
+  const originalJwt = process.env.SUNO_KIT_JWT;
+  const originalCookie = process.env.SUNO_KIT_COOKIE;
+  const originalCookieFile = process.env.SUNO_KIT_COOKIE_FILE;
+  const originalFetch = globalThis.fetch;
+  let feedCalls = 0;
+  process.env.SUNO_KIT_JWT = jwt;
+  delete process.env.SUNO_KIT_COOKIE;
+  delete process.env.SUNO_KIT_COOKIE_FILE;
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    assert(!url.includes("auth.suno.com"));
+    assert.equal((init?.headers as Record<string, string>).authorization, `Bearer ${jwt}`);
+    feedCalls += 1;
+    return new Response(JSON.stringify({
+      clips: [{ id: CLIP_ID, status: "complete", audio_url: "https://cdn.suno.ai/sil-100.mp3" }]
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  }) as typeof fetch;
+  try {
+    const result = await captureStdout(() => cliMain(["status", CLIP_ID, "--data-dir", tempDir]));
+    assert.equal(result.code, 0);
+    assert.equal(result.json.status, "url_ready");
+    assert.equal(feedCalls, 1);
+    assert(!result.text.includes(jwt));
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreEnv("SUNO_KIT_JWT", originalJwt);
+    restoreEnv("SUNO_KIT_COOKIE", originalCookie);
+    restoreEnv("SUNO_KIT_COOKIE_FILE", originalCookieFile);
+  }
+});
+
+test("--jwt rejects empty values as usage", async () => {
+  const tempDir = await fsTempDir();
+  const result = await captureStdout(() => cliMain(["status", CLIP_ID, "--data-dir", tempDir, "--jwt", ""]));
+  assert.equal(result.code, 2);
+  assert.match(result.json.error, /--jwt/);
 });
 
 test("corrupt ledger returns stable schema-drift exit code", async () => {
@@ -87,4 +131,10 @@ function restoreEnv(key: string, value: string | undefined): void {
   } else {
     process.env[key] = value;
   }
+}
+
+function makeJwt(payload: Record<string, unknown>): string {
+  const header = Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url");
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  return `${header}.${body}.signature`;
 }

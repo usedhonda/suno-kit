@@ -17,6 +17,7 @@ interface ParsedArgs {
   target?: string | undefined;
   dataDir?: string | undefined;
   cookieFile?: string | undefined;
+  jwt?: string | undefined;
   outDir?: string | undefined;
   pollMs?: number | undefined;
   timeoutMs?: number | undefined;
@@ -79,9 +80,10 @@ async function runCli(argv: string[]): Promise<number> {
     writeJson(commandError("not_found", `No ledger run or clip id matched: ${args.target}`));
     return ExitCode.usage;
   }
-  const contextOptions: { dataDir?: string; cookieFile?: string } = {};
+  const contextOptions: { dataDir?: string; cookieFile?: string; jwt?: string } = {};
   if (args.dataDir) contextOptions.dataDir = args.dataDir;
   if (args.cookieFile) contextOptions.cookieFile = args.cookieFile;
+  if (args.jwt) contextOptions.jwt = args.jwt;
   const context = await createCommandContext(contextOptions);
   if (args.command === "status") return statusCommand(args.target, context);
   if (args.command === "urls") return urlsCommand(args.target, context);
@@ -109,7 +111,7 @@ async function runCreate(args: ParsedArgs): Promise<number> {
       maxGenerationsPerDay: args.maxGenerationsPerDay ?? 4,
       minMinutesBetweenCreates: args.minMinutesBetweenCreates ?? 20
     },
-    authOptions: compactPathOptions(args)
+    authOptions: compactAuthOptions(args)
   };
   if (args.exclude) Object.assign(createOptions, { exclude: args.exclude });
   if (args.lyrics) Object.assign(createOptions, { lyrics: args.lyrics });
@@ -143,6 +145,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       index += 1;
     } else if (arg === "--cookie-file") {
       result.cookieFile = argv[index + 1];
+      index += 1;
+    } else if (arg === "--jwt") {
+      result.jwt = parseNonEmptyStringFlag("--jwt", argv[index + 1]);
       index += 1;
     } else if (arg === "--out") {
       result.outDir = argv[index + 1];
@@ -239,10 +244,10 @@ function usage(): void {
   writeJson({
     ok: true,
     usage: [
-      "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>]",
-      "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>]",
-      "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>]",
-      "suno-cli create (--dry-run|--live) --title <title> --style <style> [--lyrics <text>|--instrumental] [--exclude <text>] [--captcha-token <token>] [--token-provider <integer>] [--session-token <token>] [--user-tier <uuid>] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]"
+      "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
+      "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
+      "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",
+      "suno-cli create (--dry-run|--live) --title <title> --style <style> [--lyrics <text>|--instrumental] [--exclude <text>] [--captcha-token <token>] [--token-provider <integer>] [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]"
     ]
   });
 }
@@ -286,6 +291,12 @@ function compactPathOptions(args: ParsedArgs): { dataDir?: string; cookieFile?: 
   const options: { dataDir?: string; cookieFile?: string } = {};
   if (args.dataDir) options.dataDir = args.dataDir;
   if (args.cookieFile) options.cookieFile = args.cookieFile;
+  return options;
+}
+
+function compactAuthOptions(args: ParsedArgs): { dataDir?: string; cookieFile?: string; jwt?: string } {
+  const options: { dataDir?: string; cookieFile?: string; jwt?: string } = compactPathOptions(args);
+  if (args.jwt) options.jwt = args.jwt;
   return options;
 }
 

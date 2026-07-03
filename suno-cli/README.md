@@ -38,9 +38,29 @@ Override the data directory when testing:
 node dist/src/cli.js status <clip-id> --data-dir /tmp/suno-kit-test
 ```
 
-## Clerk Cookie
+## Clerk Cookie Or Direct JWT
 
 Retrieval commands call Suno's private HTTP API with a Clerk session token. The CLI derives that token from your browser cookie.
+
+### Alternative Auth: `SUNO_KIT_JWT` Or `--jwt`
+
+If you already have the Suno `__session` value, pass it directly as the Bearer JWT:
+
+```bash
+export SUNO_KIT_JWT='<copied-__session-value>'
+node dist/src/cli.js status <clip-id>
+```
+
+Per command:
+
+```bash
+node dist/src/cli.js status <clip-id> --jwt '<copied-__session-value>'
+node dist/src/cli.js create --live --jwt '<copied-__session-value>' --title "probe" --style "lo-fi piano" --captcha-token "$SUNO_CAPTCHA_TOKEN" --token-provider "$SUNO_TOKEN_PROVIDER"
+```
+
+When `SUNO_KIT_JWT` or `--jwt` is provided, the CLI skips `https://auth.suno.com/v1/client` and uses that JWT directly as `Authorization: Bearer <jwt>`. This avoids the HttpOnly `__client` cookie requirement in the Clerk client endpoint.
+
+The older cookie flow below needs the full Clerk browser cookie context. A `__session` cookie string alone is not enough for the `/v1/client` session discovery request, because that request can require HttpOnly `__client` state that DevTools cannot expose as a simple copied `__session` value.
 
 ### Get `__session` From Browser DevTools
 
@@ -177,7 +197,7 @@ POST https://studio-api-prod.suno.com/api/generate/v2-web/
 
 It requires:
 
-- a Clerk cookie via `SUNO_KIT_COOKIE`, `SUNO_KIT_COOKIE_FILE`, or `--cookie-file`
+- a direct JWT via `SUNO_KIT_JWT` / `--jwt`, or a Clerk cookie via `SUNO_KIT_COOKIE`, `SUNO_KIT_COOKIE_FILE`, or `--cookie-file`
 - `--live`
 - `--captcha-token <token>`
 - `--token-provider <integer>`

@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 export interface ClerkAuthOptions {
   cookie?: string;
   cookieFile?: string;
+  jwt?: string;
   fetcher?: typeof fetch;
   clientUrl?: string;
 }
@@ -25,6 +26,8 @@ export async function readCookie(options: ClerkAuthOptions): Promise<string> {
 }
 
 export async function getClerkToken(options: ClerkAuthOptions = {}): Promise<ClerkToken> {
+  const directJwt = options.jwt ?? process.env.SUNO_KIT_JWT;
+  if (directJwt) return clerkTokenFromJwt(directJwt);
   const fetcher = options.fetcher ?? fetch;
   const cookie = await readCookie(options);
   const clientUrl = options.clientUrl ?? DEFAULT_CLIENT_URL;
@@ -92,6 +95,28 @@ export function extractSessionId(payload: unknown): string | undefined {
 export function extractJwt(payload: unknown): string | undefined {
   const root = asRecord(payload);
   return firstString(root, ["jwt", "token"]) ?? firstString(asRecord(root.response), ["jwt", "token"]);
+}
+
+function clerkTokenFromJwt(jwt: string): ClerkToken {
+  const payload = decodeJwtPayload(jwt);
+  const sessionId = typeof payload.sid === "string" ? payload.sid : "";
+  const exp = payload.exp;
+  return {
+    jwt,
+    sessionId,
+    ...(typeof exp === "number" && Number.isFinite(exp) ? { expiresAt: new Date(exp * 1000).toISOString() } : {})
+  };
+}
+
+function decodeJwtPayload(jwt: string): Record<string, unknown> {
+  try {
+    const payload = jwt.split(".")[1];
+    if (!payload) return {};
+    const json = Buffer.from(payload, "base64url").toString("utf8");
+    return asRecord(JSON.parse(json));
+  } catch {
+    return {};
+  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

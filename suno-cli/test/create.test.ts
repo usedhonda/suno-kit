@@ -365,8 +365,10 @@ test("create --live returns blocked login when cookie is missing", async () => {
   const tempDir = await fsTempDir();
   const originalCookie = process.env.SUNO_KIT_COOKIE;
   const originalCookieFile = process.env.SUNO_KIT_COOKIE_FILE;
+  const originalJwt = process.env.SUNO_KIT_JWT;
   delete process.env.SUNO_KIT_COOKIE;
   delete process.env.SUNO_KIT_COOKIE_FILE;
+  delete process.env.SUNO_KIT_JWT;
   try {
     const output = await captureStdout(() => cliMain([
       "create",
@@ -384,6 +386,7 @@ test("create --live returns blocked login when cookie is missing", async () => {
   } finally {
     restoreEnv("SUNO_KIT_COOKIE", originalCookie);
     restoreEnv("SUNO_KIT_COOKIE_FILE", originalCookieFile);
+    restoreEnv("SUNO_KIT_JWT", originalJwt);
   }
 });
 
