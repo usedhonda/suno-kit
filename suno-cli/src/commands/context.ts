@@ -14,7 +14,7 @@ export async function createCommandContext(options: { dataDir?: string; cookieFi
   if (options.dataDir) pathOptions.dataDir = options.dataDir;
   if (options.cookieFile) pathOptions.cookieFile = options.cookieFile;
   const paths = resolvePathConfig(pathOptions);
-  const authOptions: ClerkAuthOptions = {};
+  const authOptions: ClerkAuthOptions = { sessionFile: paths.sessionFile };
   if (options.cookie) authOptions.cookie = options.cookie;
   if (options.jwt) authOptions.jwt = options.jwt;
   if (paths.cookieFile) authOptions.cookieFile = paths.cookieFile;

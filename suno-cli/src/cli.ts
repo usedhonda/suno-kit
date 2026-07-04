@@ -3,6 +3,8 @@ import { pathToFileURL } from "node:url";
 import { createCommandContext } from "./commands/context.js";
 import { createCommand, CreateCommandOptions } from "./commands/create.js";
 import { downloadCommand } from "./commands/download.js";
+import { loginCommand, LoginCommandOptions } from "./commands/login.js";
+import { logoutCommand } from "./commands/logout.js";
 import { commandError, ExitCode, classifyError, writeJson } from "./commands/output.js";
 import { resolveTarget } from "./commands/resolve-target.js";
 import { statusCommand } from "./commands/status.js";
@@ -18,6 +20,7 @@ interface ParsedArgs {
   dataDir?: string | undefined;
   cookieFile?: string | undefined;
   jwt?: string | undefined;
+  jwtPaste?: string | undefined;
   outDir?: string | undefined;
   pollMs?: number | undefined;
   timeoutMs?: number | undefined;
@@ -62,12 +65,18 @@ async function runCli(argv: string[]): Promise<number> {
     usage();
     return ExitCode.ok;
   }
-  if (!["status", "urls", "download", "create"].includes(args.command)) {
+  if (!["status", "urls", "download", "create", "login", "logout"].includes(args.command)) {
     writeJson(commandError("usage", `Unsupported command: ${args.command}`));
     return ExitCode.usage;
   }
   if (args.command === "create") {
     return runCreate(args);
+  }
+  if (args.command === "login") {
+    return runLogin(args);
+  }
+  if (args.command === "logout") {
+    return runLogout(args);
   }
   if (!args.target) {
     writeJson(commandError("usage", `${args.command} requires <run-id|clip-id|song-url>.`));
@@ -111,7 +120,7 @@ async function runCreate(args: ParsedArgs): Promise<number> {
       maxGenerationsPerDay: args.maxGenerationsPerDay ?? 4,
       minMinutesBetweenCreates: args.minMinutesBetweenCreates ?? 20
     },
-    authOptions: compactAuthOptions(args)
+    authOptions: { ...compactAuthOptions(args), sessionFile: paths.sessionFile }
   };
   if (args.exclude) Object.assign(createOptions, { exclude: args.exclude });
   if (args.lyrics) Object.assign(createOptions, { lyrics: args.lyrics });
@@ -143,6 +152,32 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   return createCommand(createOptions);
 }
 
+async function runLogin(args: ParsedArgs): Promise<number> {
+  const paths = resolvePathConfig(compactPathOptions(args));
+  const loginOptions: LoginCommandOptions = {
+    sessionFile: paths.sessionFile,
+    profileDir: paths.browserProfileDir
+  };
+  if (args.timeoutMs) loginOptions.timeoutMs = args.timeoutMs;
+  if (args.jwtPaste !== undefined) {
+    loginOptions.jwtPaste = args.jwtPaste;
+  } else {
+    const login = await import("./browser/login.js");
+    loginOptions.capturer = {
+      capture: (input) => login.captureBrowserSession(input)
+    };
+  }
+  return loginCommand(loginOptions);
+}
+
+async function runLogout(args: ParsedArgs): Promise<number> {
+  const paths = resolvePathConfig(compactPathOptions(args));
+  return logoutCommand({
+    sessionFile: paths.sessionFile,
+    profileDir: paths.browserProfileDir
+  });
+}
+
 function parseArgs(argv: string[]): ParsedArgs {
   const result: ParsedArgs = {};
   const rest: string[] = [];
@@ -156,6 +191,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       index += 1;
     } else if (arg === "--jwt") {
       result.jwt = parseNonEmptyStringFlag("--jwt", argv[index + 1]);
+      index += 1;
+    } else if (arg === "--jwt-paste") {
+      result.jwtPaste = argv[index + 1] ?? "";
       index += 1;
     } else if (arg === "--out") {
       result.outDir = argv[index + 1];
@@ -252,6 +290,8 @@ function usage(): void {
   writeJson({
     ok: true,
     usage: [
+      "suno-cli login [--jwt-paste <jwt>] [--timeout-ms <ms>] [--data-dir <dir>]",
+      "suno-cli logout [--data-dir <dir>]",
       "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",

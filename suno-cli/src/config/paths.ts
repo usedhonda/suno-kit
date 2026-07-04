@@ -5,6 +5,7 @@ export interface PathConfig {
   dataDir: string;
   ledgerPath: string;
   browserProfileDir: string;
+  sessionFile: string;
   cookieFile?: string;
 }
 
@@ -23,6 +24,7 @@ export function resolvePathConfig(options: { dataDir?: string; cookieFile?: stri
     dataDir,
     ledgerPath: path.join(dataDir, "runs.json"),
     browserProfileDir: path.join(dataDir, "browser-profile"),
+    sessionFile: path.join(dataDir, "session.json"),
     ...(cookieFile ? { cookieFile: path.resolve(cookieFile) } : {})
   };
 }

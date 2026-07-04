@@ -1,9 +1,11 @@
 import fs from "node:fs/promises";
+import { loadSession } from "./session.js";
 
 export interface ClerkAuthOptions {
   cookie?: string;
   cookieFile?: string;
   jwt?: string;
+  sessionFile?: string;
   fetcher?: typeof fetch;
   clientUrl?: string;
 }
@@ -28,8 +30,20 @@ export async function readCookie(options: ClerkAuthOptions): Promise<string> {
 export async function getClerkToken(options: ClerkAuthOptions = {}): Promise<ClerkToken> {
   const directJwt = options.jwt ?? process.env.SUNO_KIT_JWT;
   if (directJwt) return clerkTokenFromJwt(directJwt);
-  const fetcher = options.fetcher ?? fetch;
+  // Priority: explicit --cookie / env cookie / cookie-file > saved session.
+  const explicitCookie = options.cookie ?? process.env.SUNO_KIT_COOKIE;
+  const hasExplicitCookieSource = Boolean(explicitCookie) || Boolean(options.cookieFile);
+  if (!hasExplicitCookieSource && options.sessionFile) {
+    const saved = await loadSession(options.sessionFile);
+    if (saved?.jwt) return clerkTokenFromJwt(saved.jwt);
+    if (saved?.cookie) return exchangeCookieForToken(saved.cookie, options);
+  }
   const cookie = await readCookie(options);
+  return exchangeCookieForToken(cookie, options);
+}
+
+async function exchangeCookieForToken(cookie: string, options: ClerkAuthOptions): Promise<ClerkToken> {
+  const fetcher = options.fetcher ?? fetch;
   const clientUrl = options.clientUrl ?? DEFAULT_CLIENT_URL;
   const clientResponse = await fetcher(clientUrl, {
     method: "GET",
@@ -97,7 +111,7 @@ export function extractJwt(payload: unknown): string | undefined {
   return firstString(root, ["jwt", "token"]) ?? firstString(asRecord(root.response), ["jwt", "token"]);
 }
 
-function clerkTokenFromJwt(jwt: string): ClerkToken {
+export function clerkTokenFromJwt(jwt: string): ClerkToken {
   const payload = decodeJwtPayload(jwt);
   const sessionId = typeof payload.sid === "string" ? payload.sid : "";
   const exp = payload.exp;

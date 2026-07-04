@@ -43,9 +43,15 @@ interface PlaywrightModule {
   };
 }
 
-interface BrowserContext {
+export interface BrowserContext {
   newPage(): Promise<Page>;
   close(): Promise<void>;
+}
+
+export interface BrowserLaunchOptions {
+  profileDir: string;
+  headless?: boolean;
+  viewport?: { width: number; height: number };
 }
 
 interface Page {
@@ -76,19 +82,26 @@ export function createBrowserCaptchaMinter(options: BrowserCaptchaMintOptions): 
   };
 }
 
+export async function launchPersistentBrowser(options: BrowserLaunchOptions): Promise<BrowserContext> {
+  const playwright = await loadPlaywright();
+  await fs.mkdir(options.profileDir, { recursive: true });
+  return playwright.chromium.launchPersistentContext(options.profileDir, {
+    headless: options.headless ?? true,
+    viewport: options.viewport ?? { width: 1280, height: 900 }
+  });
+}
+
 export async function mintBrowserCaptcha(
   input: BrowserCaptchaMintInput,
   options: BrowserCaptchaMintOptions
 ): Promise<BrowserCaptchaMintResult> {
-  const playwright = await loadPlaywright();
-  await fs.mkdir(options.profileDir, { recursive: true });
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const tokenProviderFallback = safeInteger(input.tokenProvider);
   let context: BrowserContext | undefined;
   try {
-    context = await playwright.chromium.launchPersistentContext(options.profileDir, {
-      headless: options.headless ?? true,
-      viewport: { width: 1280, height: 900 }
+    context = await launchPersistentBrowser({
+      profileDir: options.profileDir,
+      headless: options.headless ?? true
     });
     const page = await context.newPage();
     const capture = createCaptureWaiter(timeoutMs, tokenProviderFallback);
