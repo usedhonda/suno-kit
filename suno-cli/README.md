@@ -73,6 +73,16 @@ node dist/src/cli.js login --jwt-paste '<copied-__session-jwt>'
 
 The pasted value is never printed back. Do not paste it into chat, issues, logs, or commit history.
 
+### Unattended captcha: `login --cookie-paste`
+
+`create --live` mints hCaptcha in a headless browser. That browser only renders hCaptcha when the mint profile is logged in, so the CLI injects your saved cookies into it. To enable this, persist your **full** `document.cookie` string (not just `__session`):
+
+```bash
+node dist/src/cli.js login --cookie-paste '<the full document.cookie string>'
+```
+
+Copy it from DevTools Console on a logged-in `https://suno.com` tab by evaluating `document.cookie`. The saved cookies are injected into the mint profile (across `.suno.com` and `suno.com`) so `create --live` can solve captcha with no manual token采取. The pasted value is never printed back; treat it as a secret.
+
 ### logout
 
 ```bash

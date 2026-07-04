@@ -5,6 +5,17 @@ export interface BrowserCaptchaMintOptions {
   headless?: boolean;
   timeoutMs?: number;
   createUrl?: string;
+  // Raw `document.cookie` string from a logged-in Suno session. When present it is
+  // injected into the mint profile so suno.com/create opens logged-in and renders
+  // hCaptcha instead of redirecting to the login page.
+  cookieHeader?: string;
+}
+
+export interface CookieParam {
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
 }
 
 export interface BrowserCaptchaMintInput {
@@ -45,6 +56,7 @@ interface PlaywrightModule {
 
 export interface BrowserContext {
   newPage(): Promise<Page>;
+  addCookies(cookies: CookieParam[]): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -60,6 +72,7 @@ interface Page {
   addInitScript(script: string): Promise<void>;
   goto(url: string, options: Record<string, unknown>): Promise<unknown>;
   evaluate<T>(callback: () => T | Promise<T>): Promise<T>;
+  evaluate<T, A>(callback: (arg: A) => T | Promise<T>, arg: A): Promise<T>;
 }
 
 interface Route {
@@ -103,6 +116,12 @@ export async function mintBrowserCaptcha(
       profileDir: options.profileDir,
       headless: options.headless ?? true
     });
+    if (options.cookieHeader) {
+      const cookies = parseCookieHeader(options.cookieHeader);
+      if (cookies.length > 0) {
+        await context.addCookies(cookies);
+      }
+    }
     const page = await context.newPage();
     const capture = createCaptureWaiter(timeoutMs, tokenProviderFallback);
     await page.exposeBinding("__sunoCliCaptureCaptcha", (_source, payload) => {
@@ -117,16 +136,12 @@ export async function mintBrowserCaptcha(
       waitUntil: "domcontentloaded",
       timeout: timeoutMs
     });
-    await page.evaluate(async () => {
-      const root = globalThis as typeof globalThis & {
-        hcaptcha?: { execute?: (...args: unknown[]) => unknown };
-        __sunoCliCaptureCaptcha?: (payload: unknown) => void;
-      };
-      const execute = root.hcaptcha?.execute;
-      if (typeof execute !== "function") return;
-      const result = await execute();
-      root.__sunoCliCaptureCaptcha?.(result);
-    }).catch(() => undefined);
+    // Trigger Suno's real generate flow instead of calling hcaptcha.execute()
+    // directly ("No hCaptcha exists" — the widget is only rendered mid-flow).
+    // Filling the style field and clicking "曲を作成" makes Suno render + solve
+    // hCaptcha and fire the create request, which the route hook aborts (no
+    // credits spent) while the init-script capture reads token + token_provider.
+    await triggerGenerateFlow(page, input.style);
     return await capture.promise;
   } catch (error) {
     if (error instanceof BrowserCaptchaMintError) throw error;
@@ -146,6 +161,69 @@ export async function mintBrowserCaptcha(
   } finally {
     await context?.close().catch(() => undefined);
   }
+}
+
+// Parse a raw `document.cookie` string into Playwright cookie params, expanded
+// across both `.suno.com` and `suno.com` so the mint profile is treated as
+// logged-in on suno.com/create (verified on-device).
+export function parseCookieHeader(cookieHeader: string): CookieParam[] {
+  return cookieHeader
+    .split(";")
+    .map((pair) => {
+      const eq = pair.indexOf("=");
+      if (eq === -1) return undefined;
+      const name = pair.slice(0, eq).trim();
+      const value = pair.slice(eq + 1).trim();
+      if (!name || !value) return undefined;
+      return { name, value };
+    })
+    .filter((entry): entry is { name: string; value: string } => entry !== undefined)
+    .flatMap((entry) => [
+      { ...entry, domain: ".suno.com", path: "/" },
+      { ...entry, domain: "suno.com", path: "/" }
+    ]);
+}
+
+// Drive the create form so Suno renders and solves hCaptcha itself. Best-effort:
+// failures fall through to the capture timeout (surfaced as captcha_required).
+async function triggerGenerateFlow(page: Page, style: string): Promise<void> {
+  await page
+    .evaluate(async (styleText: string): Promise<string> => {
+      const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+      const findStyleTextarea = (): HTMLTextAreaElement | null => {
+        const areas = Array.from(document.querySelectorAll("textarea"));
+        return areas.find((el) => (el.placeholder ?? "").includes("オーケストレーション")) ?? null;
+      };
+      let textarea: HTMLTextAreaElement | null = null;
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        textarea = findStyleTextarea();
+        if (textarea) break;
+        await wait(500);
+      }
+      if (!textarea) return "no_style_textarea";
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
+      if (setter) setter.call(textarea, styleText);
+      else textarea.value = styleText;
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      await wait(300);
+      const findCreateButton = (): HTMLButtonElement | null => {
+        const buttons = Array.from(document.querySelectorAll("button"));
+        return buttons.find((button) => {
+          const label = `${button.textContent ?? ""} ${button.getAttribute("aria-label") ?? ""}`;
+          return label.includes("を作成") && !button.disabled;
+        }) ?? null;
+      };
+      let createButton: HTMLButtonElement | null = null;
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        createButton = findCreateButton();
+        if (createButton) break;
+        await wait(500);
+      }
+      if (!createButton) return "no_create_button";
+      createButton.click();
+      return "triggered";
+    }, style)
+    .catch(() => "trigger_error");
 }
 
 function createCaptureWaiter(timeoutMs: number, tokenProviderFallback: number | undefined): {

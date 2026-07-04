@@ -351,16 +351,24 @@ test("create live-fire path is blocked without manual gate", async () => {
 
 test("create --live returns browser recovery when captcha token is omitted and browser is unavailable", async () => {
   const tempDir = await fsTempDir();
-  const output = await captureStdout(() => cliMain([
-    "create",
-    "--live",
-    "--data-dir", tempDir,
-    "--title", "verify probe",
-    "--style", "lo-fi piano"
-  ]));
-  assert.equal(output.code, 50);
-  assert.equal(output.json.status, "browser_required");
-  assert.match(output.json.recovery.next_command, /playwright install chromium|npm install playwright/);
+  // Force "browser unavailable" deterministically, whether or not a Chromium
+  // binary happens to be installed on this machine.
+  const originalBrowsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  process.env.PLAYWRIGHT_BROWSERS_PATH = path.join(tempDir, "no-browsers");
+  try {
+    const output = await captureStdout(() => cliMain([
+      "create",
+      "--live",
+      "--data-dir", tempDir,
+      "--title", "verify probe",
+      "--style", "lo-fi piano"
+    ]));
+    assert.equal(output.code, 50);
+    assert.equal(output.json.status, "browser_required");
+    assert.match(output.json.recovery.next_command, /playwright install chromium|npm install playwright/);
+  } finally {
+    restoreEnv("PLAYWRIGHT_BROWSERS_PATH", originalBrowsersPath);
+  }
 });
 
 test("create --live injects mocked browser captcha mint before submit", async () => {

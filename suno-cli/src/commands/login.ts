@@ -17,6 +17,7 @@ export interface LoginCommandOptions {
   sessionFile: string;
   profileDir: string;
   jwtPaste?: string;
+  cookiePaste?: string;
   loginUrl?: string;
   timeoutMs?: number;
   capturer?: BrowserSessionCapturer;
@@ -31,6 +32,18 @@ const INSTALL_RECOVERY = {
 
 export async function loginCommand(options: LoginCommandOptions): Promise<number> {
   const now = options.now ?? new Date();
+
+  if (options.cookiePaste !== undefined) {
+    const cookie = options.cookiePaste.trim();
+    if (!cookie) {
+      writeJson(commandError("usage", "Usage: --cookie-paste requires a non-empty cookie value."));
+      return ExitCode.usage;
+    }
+    const session: SavedSession = { cookie, savedAt: now.toISOString() };
+    await saveSession(options.sessionFile, session);
+    writeJson({ ok: true, status: "login_success", method: "cookie_paste", stored: true });
+    return ExitCode.ok;
+  }
 
   if (options.jwtPaste !== undefined) {
     const jwt = options.jwtPaste.trim();

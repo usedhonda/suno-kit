@@ -6,6 +6,7 @@ import { createCommand, CreateCommandOptions } from "./commands/create.js";
 import { downloadCommand } from "./commands/download.js";
 import { loginCommand, LoginCommandOptions } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
+import { loadSession } from "./auth/session.js";
 import { commandError, ExitCode, classifyError, recoveryForStatus, statusForExitCode, writeJson } from "./commands/output.js";
 import { resolveTarget } from "./commands/resolve-target.js";
 import { statusCommand } from "./commands/status.js";
@@ -22,6 +23,7 @@ interface ParsedArgs {
   cookieFile?: string | undefined;
   jwt?: string | undefined;
   jwtPaste?: string | undefined;
+  cookiePaste?: string | undefined;
   outDir?: string | undefined;
   pollMs?: number | undefined;
   timeoutMs?: number | undefined;
@@ -146,11 +148,14 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   if (userTier) Object.assign(createOptions, { userTier });
   if (args.runId) Object.assign(createOptions, { runId: args.runId });
   if (args.live && !args.captchaToken) {
+    const saved = await loadSession(paths.sessionFile);
     const browser = await import("./browser/captcha.js");
+    const minterOptions: { profileDir: string; cookieHeader?: string } = {
+      profileDir: paths.browserProfileDir
+    };
+    if (saved?.cookie) minterOptions.cookieHeader = saved.cookie;
     Object.assign(createOptions, {
-      captchaMinter: browser.createBrowserCaptchaMinter({
-        profileDir: paths.browserProfileDir
-      })
+      captchaMinter: browser.createBrowserCaptchaMinter(minterOptions)
     });
   }
   return createCommand(createOptions);
@@ -165,6 +170,8 @@ async function runLogin(args: ParsedArgs): Promise<number> {
   if (args.timeoutMs) loginOptions.timeoutMs = args.timeoutMs;
   if (args.jwtPaste !== undefined) {
     loginOptions.jwtPaste = args.jwtPaste;
+  } else if (args.cookiePaste !== undefined) {
+    loginOptions.cookiePaste = args.cookiePaste;
   } else {
     const login = await import("./browser/login.js");
     loginOptions.capturer = {
@@ -198,6 +205,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       index += 1;
     } else if (arg === "--jwt-paste") {
       result.jwtPaste = argv[index + 1] ?? "";
+      index += 1;
+    } else if (arg === "--cookie-paste") {
+      result.cookiePaste = argv[index + 1] ?? "";
       index += 1;
     } else if (arg === "--out") {
       result.outDir = argv[index + 1];
@@ -294,7 +304,7 @@ function usage(): void {
   writeJson({
     ok: true,
     usage: [
-      "suno-cli login [--jwt-paste <jwt>] [--timeout-ms <ms>] [--data-dir <dir>]",
+      "suno-cli login [--jwt-paste <jwt>] [--cookie-paste <document.cookie>] [--timeout-ms <ms>] [--data-dir <dir>]",
       "suno-cli logout [--data-dir <dir>]",
       "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",

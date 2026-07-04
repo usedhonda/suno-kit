@@ -23,6 +23,30 @@ test("login --jwt-paste persists session and hides the secret in output", async 
   assert.equal(saved?.sessionId, "sess_paste");
 });
 
+test("login --cookie-paste persists the full cookie for captcha injection", async () => {
+  const dir = await fsTempDir();
+  const sessionFile = path.join(dir, "session.json");
+  const cookie = "__session=abc; __client_uat=1; suno_auth=xyz";
+  const result = await captureStdout(() =>
+    loginCommand({ sessionFile, profileDir: path.join(dir, "profile"), cookiePaste: cookie })
+  );
+  assert.equal(result.code, 0);
+  assert.equal(result.json.status, "login_success");
+  assert.equal(result.json.method, "cookie_paste");
+  assert(!result.text.includes("suno_auth=xyz"));
+  const saved = await loadSession(sessionFile);
+  assert.equal(saved?.cookie, cookie);
+});
+
+test("login --cookie-paste with empty value is a usage error", async () => {
+  const dir = await fsTempDir();
+  const result = await captureStdout(() =>
+    loginCommand({ sessionFile: path.join(dir, "session.json"), profileDir: path.join(dir, "profile"), cookiePaste: "   " })
+  );
+  assert.equal(result.code, 2);
+  assert.match(result.json.error, /--cookie-paste/);
+});
+
 test("login --jwt-paste with empty value is a usage error", async () => {
   const dir = await fsTempDir();
   const result = await captureStdout(() =>
