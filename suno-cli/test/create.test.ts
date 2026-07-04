@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { cliMain } from "../src/cli.js";
+import { createCommand } from "../src/commands/create.js";
 import { buildCreateBody } from "../src/create/body.js";
 import { LedgerStore } from "../src/ledger/store.js";
 
@@ -348,7 +349,7 @@ test("create live-fire path is blocked without manual gate", async () => {
   assert.equal(output.json.status, "manual_gate_required");
 });
 
-test("create --live requires captcha token before submit", async () => {
+test("create --live returns browser recovery when captcha token is omitted and browser is unavailable", async () => {
   const tempDir = await fsTempDir();
   const output = await captureStdout(() => cliMain([
     "create",
@@ -357,8 +358,46 @@ test("create --live requires captcha token before submit", async () => {
     "--title", "verify probe",
     "--style", "lo-fi piano"
   ]));
-  assert.equal(output.code, 2);
-  assert.match(output.json.error, /captcha-token/);
+  assert.equal(output.code, 50);
+  assert.equal(output.json.status, "browser_required");
+  assert.match(output.json.recovery.next_command, /playwright install chromium|npm install playwright/);
+});
+
+test("create --live injects mocked browser captcha mint before submit", async () => {
+  const tempDir = await fsTempDir();
+  const ledger = new LedgerStore(path.join(tempDir, "runs.json"));
+  let submittedBody: any;
+  const output = await captureStdout(() => createCommand({
+    dryRun: false,
+    live: true,
+    title: "verify probe",
+    style: "lo-fi piano",
+    ledger,
+    policy: { maxGenerationsPerDay: 4, minMinutesBetweenCreates: 0 },
+    runId: "run_minted",
+    captchaMinter: {
+      mint: async (input) => {
+        assert.equal(input.title, "verify probe");
+        assert.equal(input.style, "lo-fi piano");
+        return { token: "minted-captcha-secret", tokenProvider: 1 };
+      }
+    },
+    submitter: {
+      submit: async (body) => {
+        submittedBody = body;
+        return {
+          response: { clips: [{ id: LIVE_CLIP_ID }] },
+          clipIds: [LIVE_CLIP_ID],
+          songUrls: [`https://suno.com/song/${LIVE_CLIP_ID}`]
+        };
+      }
+    }
+  }));
+  assert.equal(output.code, 0);
+  assert.equal(output.json.status, "submitted");
+  assert.equal(submittedBody.token, "minted-captcha-secret");
+  assert.equal(submittedBody.token_provider, 1);
+  assert.equal(output.text.includes("minted-captcha-secret"), false);
 });
 
 test("create --live returns blocked login when cookie is missing", async () => {

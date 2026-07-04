@@ -4,6 +4,7 @@ import path from "node:path";
 export interface PathConfig {
   dataDir: string;
   ledgerPath: string;
+  browserProfileDir: string;
   cookieFile?: string;
 }
 
@@ -21,6 +22,7 @@ export function resolvePathConfig(options: { dataDir?: string; cookieFile?: stri
   return {
     dataDir,
     ledgerPath: path.join(dataDir, "runs.json"),
+    browserProfileDir: path.join(dataDir, "browser-profile"),
     ...(cookieFile ? { cookieFile: path.resolve(cookieFile) } : {})
   };
 }

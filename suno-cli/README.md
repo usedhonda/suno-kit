@@ -6,7 +6,7 @@ Current status:
 
 - Phase1 retrieval is implemented: `status`, `urls`, and `download`.
 - Phase2 create supports safe `--dry-run` body inspection and gated `--live` HTTP submit.
-- Live create can spend credits and requires explicit owner GO plus a fresh hCaptcha token.
+- Live create can spend credits. When `--captcha-token` is omitted, it starts a dedicated Playwright browser profile to mint hCaptcha itself.
 
 ## Install And Build
 
@@ -22,6 +22,12 @@ npm run build
 node dist/src/cli.js --help
 ```
 
+`npm install` does not download a browser binary for you. The browser path is only needed for `create --live` without a supplied captcha token:
+
+```bash
+npx playwright install chromium
+```
+
 ## Data Directory
 
 Runtime state is stored outside the repository. The default path is:
@@ -30,7 +36,7 @@ Runtime state is stored outside the repository. The default path is:
 ~/.local/share/suno-kit/
 ```
 
-The ledger file is `~/.local/share/suno-kit/runs.json`. It is written with a per-ledger lock and atomic temp-file rename. If the ledger is corrupt, the CLI fails closed instead of silently resetting state.
+The ledger file is `~/.local/share/suno-kit/runs.json`. The live captcha browser profile is `~/.local/share/suno-kit/browser-profile/`. It is dedicated to `suno-cli` and must not be shared with any artist-runtime browser profile. The ledger is written with a per-ledger lock and atomic temp-file rename. If the ledger is corrupt, the CLI fails closed instead of silently resetting state.
 
 Override the data directory when testing:
 
@@ -55,7 +61,7 @@ Per command:
 
 ```bash
 node dist/src/cli.js status <clip-id> --jwt '<copied-__session-value>'
-node dist/src/cli.js create --live --jwt '<copied-__session-value>' --title "probe" --style "lo-fi piano" --captcha-token "$SUNO_CAPTCHA_TOKEN" --token-provider "$SUNO_TOKEN_PROVIDER"
+node dist/src/cli.js create --live --jwt '<copied-__session-value>' --title "probe" --style "lo-fi piano"
 ```
 
 When `SUNO_KIT_JWT` or `--jwt` is provided, the CLI skips `https://auth.suno.com/v1/client` and uses that JWT directly as `Authorization: Bearer <jwt>`. This avoids the HttpOnly `__client` cookie requirement in the Clerk client endpoint.
@@ -199,9 +205,8 @@ It requires:
 
 - a direct JWT via `SUNO_KIT_JWT` / `--jwt`, or a Clerk cookie via `SUNO_KIT_COOKIE`, `SUNO_KIT_COOKIE_FILE`, or `--cookie-file`
 - `--live`
-- `--captcha-token <token>`
-- `--token-provider <integer>`
-- explicit owner GO, because a successful request can spend Suno credits
+- Playwright Chromium installed when `--captcha-token` is omitted
+- explicit owner awareness, because a successful request can spend Suno credits
 
 Example:
 
@@ -210,12 +215,12 @@ node dist/src/cli.js create --live \
   --title "verify probe" \
   --style "lo-fi piano, mellow, rain, tape hiss" \
   --lyrics "rain on the window" \
-  --captcha-token "$SUNO_CAPTCHA_TOKEN" \
-  --token-provider "$SUNO_TOKEN_PROVIDER" \
   --run-id paid-probe-001
 ```
 
-The CLI obtains the Clerk JWT from the cookie, then submits the body with `Content-Type: application/json`. On success it records the run in the ledger and returns extracted `clips[].id` values plus `https://suno.com/song/<clip_id>` URLs.
+When `--captcha-token` is omitted, the CLI lazy-loads Playwright, opens headless Chromium with the dedicated `~/.local/share/suno-kit/browser-profile/`, installs a block-capture hook before loading `https://suno.com/create`, captures the hCaptcha `token` and integer `token_provider`, closes the browser, then submits the body with `Content-Type: application/json`. On success it records the run in the ledger and returns extracted `clips[].id` values plus `https://suno.com/song/<clip_id>` URLs.
+
+If Playwright or Chromium is missing, the CLI returns a JSON error with `recovery.next_command`.
 
 To supply optional live-only metadata, use:
 
@@ -223,17 +228,17 @@ To supply optional live-only metadata, use:
 node dist/src/cli.js create --live \
   --title "verify probe" \
   --style "lo-fi piano" \
-  --captcha-token "$SUNO_CAPTCHA_TOKEN" \
-  --token-provider "$SUNO_TOKEN_PROVIDER" \
   --session-token "$SUNO_CREATE_SESSION_TOKEN" \
   --user-tier "$SUNO_USER_TIER"
 ```
 
 `SUNO_CREATE_SESSION_TOKEN` and `SUNO_USER_TIER` are also read from the environment. If they are not supplied, the corresponding metadata keys are omitted.
 
-#### Captcha Token
+#### Captcha Minting And Escape Hatch
 
-The CLI does not solve or mint hCaptcha tokens. Get a fresh token immediately before live submit:
+The default live path mints hCaptcha in the dedicated browser profile. If browser minting fails, the JSON error distinguishes setup failure (`browser_required`) from captcha timeout (`captcha_required`) and generic browser mint failure (`captcha_mint_failed`).
+
+For debugging, you can still supply a fresh token manually. Supplied values always win over browser minting:
 
 1. Open `https://suno.com/create` while logged in.
 2. Open DevTools -> Network.
@@ -243,7 +248,7 @@ The CLI does not solve or mint hCaptcha tokens. Get a fresh token immediately be
 6. Copy the request body field named `token_provider`; live submit requires it as an integer.
 7. Use them once with `--captcha-token` and `--token-provider`.
 
-The token has a short TTL. Do not log it, paste it into chat, or commit it. Dry-run keeps the legacy default `token_provider` placeholder, but `--live` fails closed unless `--token-provider <integer>` is supplied.
+The token has a short TTL. Do not log it, paste it into chat, or commit it. Dry-run keeps the legacy default `token_provider` placeholder. Manual `--live --captcha-token` still fails closed unless `--token-provider <integer>` is supplied.
 
 ## Exit Codes
 
@@ -264,7 +269,7 @@ Errors are JSON and are redacted before output.
 - Cookies, JWTs, bearer tokens, Clerk tokens, and `create_session_token` are redacted from JSON output.
 - Runtime data is kept outside the repo by default.
 - `node_modules/` and `dist/` are ignored in this package.
-- Live create is behind `--live`, `--captcha-token`, and `--token-provider` because it can spend Suno credits.
+- Live create is behind `--live` and browser captcha minting because it can spend Suno credits.
 
 ## Manual Live-Fire Checklist
 
@@ -274,9 +279,10 @@ Do not run this checklist without explicit owner GO.
 2. Confirm the current credit balance and expected credit cost.
 3. Confirm `npm test` is green.
 4. Confirm `create --dry-run` emits the expected body and reuses `transactionUuid` for retry.
-5. Get a fresh `token` from the browser DevTools `/api/generate/v2-web/` request body.
-6. Submit exactly one request with `create --live --captcha-token <token> --token-provider <integer>`.
-7. Record the returned `clips[].id` values only; do not log captcha token, Clerk JWT, cookie, or `create_session_token`.
-8. Use `status`, `urls`, and `download` to retrieve results.
+5. Confirm Playwright Chromium is installed with `npx playwright install chromium`.
+6. Submit exactly one request with `create --live`.
+7. If browser minting fails, use the manual `--captcha-token <token> --token-provider <integer>` escape hatch for one request only.
+8. Record the returned `clips[].id` values only; do not log captcha token, Clerk JWT, cookie, or `create_session_token`.
+9. Use `status`, `urls`, and `download` to retrieve results.
 
 This repository task does not execute that live-fire step.

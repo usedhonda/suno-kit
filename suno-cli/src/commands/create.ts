@@ -13,7 +13,19 @@ export interface CreateCommandOptions extends CreateInput {
   policy: BudgetPolicy;
   authOptions?: ClerkAuthOptions;
   submitter?: GenerateSubmitter;
+  captchaMinter?: CaptchaMinter;
   now?: Date;
+}
+
+export interface CaptchaMintInput extends CreateInput {}
+
+export interface CaptchaMintResult {
+  token: string;
+  tokenProvider: number;
+}
+
+export interface CaptchaMinter {
+  mint(input: CaptchaMintInput): Promise<CaptchaMintResult>;
 }
 
 export async function createCommand(options: CreateCommandOptions): Promise<number> {
@@ -25,55 +37,58 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
     });
     return ExitCode.blockedPaymentOrQuota;
   }
-  if (options.live && !options.token) {
-    writeJson(commandError("usage", "Usage: create --live requires --captcha-token."));
-    return ExitCode.usage;
+  let completedOptions: CreateCommandOptions;
+  try {
+    completedOptions = await withLiveCaptcha(options);
+  } catch (error) {
+    if (error instanceof CommandExit) return error.code;
+    throw error;
   }
-  if (options.live && options.tokenProvider === undefined) {
+  if (completedOptions.live && completedOptions.tokenProvider === undefined) {
     writeJson(commandError("usage", "Usage: create --live requires --token-provider <integer>."));
     return ExitCode.usage;
   }
-  if (options.live && !Number.isSafeInteger(options.tokenProvider)) {
+  if (completedOptions.live && !Number.isSafeInteger(completedOptions.tokenProvider)) {
     writeJson(commandError("usage", "Usage: --token-provider must be an integer for --live."));
     return ExitCode.usage;
   }
-  const provisionalBody = buildCreateBody(options);
+  const provisionalBody = buildCreateBody(completedOptions);
   const requestHash = hashCreateBody(provisionalBody);
-  const runId = options.runId ?? `run_${randomUUID()}`;
-  const reserved = await options.ledger.reserveCreateRun({
+  const runId = completedOptions.runId ?? `run_${randomUUID()}`;
+  const reserved = await completedOptions.ledger.reserveCreateRun({
     runId,
     transactionUuid: provisionalBody.transaction_uuid,
     requestHash,
     creditsReserved: 10,
-    policy: options.policy,
-    now: options.now ?? new Date()
+    policy: completedOptions.policy,
+    now: completedOptions.now ?? new Date()
   });
   const transactionUuid = reserved.transactionUuid ?? provisionalBody.transaction_uuid;
   const bodyInput: CreateInput = {
-    title: options.title,
-    style: options.style,
+    title: completedOptions.title,
+    style: completedOptions.style,
     transactionUuid
   };
-  if (options.exclude) bodyInput.exclude = options.exclude;
-  if (options.lyrics) bodyInput.lyrics = options.lyrics;
-  if (options.instrumental !== undefined) bodyInput.instrumental = options.instrumental;
-  if (options.model) bodyInput.model = options.model;
-  if (options.vocalGender) bodyInput.vocalGender = options.vocalGender;
-  if (options.token) bodyInput.token = options.token;
-  if (options.tokenProvider !== undefined) bodyInput.tokenProvider = options.tokenProvider;
-  if (options.weirdness !== undefined) bodyInput.weirdness = options.weirdness;
-  if (options.styleInfluence !== undefined) bodyInput.styleInfluence = options.styleInfluence;
-  if (options.personaId) bodyInput.personaId = options.personaId;
-  if (options.coverClipId) bodyInput.coverClipId = options.coverClipId;
-  if (options.coverStartS !== undefined) bodyInput.coverStartS = options.coverStartS;
-  if (options.coverEndS !== undefined) bodyInput.coverEndS = options.coverEndS;
-  if (options.audioInfluence !== undefined) bodyInput.audioInfluence = options.audioInfluence;
-  if (options.sessionToken) bodyInput.sessionToken = options.sessionToken;
-  if (options.userTier) bodyInput.userTier = options.userTier;
+  if (completedOptions.exclude) bodyInput.exclude = completedOptions.exclude;
+  if (completedOptions.lyrics) bodyInput.lyrics = completedOptions.lyrics;
+  if (completedOptions.instrumental !== undefined) bodyInput.instrumental = completedOptions.instrumental;
+  if (completedOptions.model) bodyInput.model = completedOptions.model;
+  if (completedOptions.vocalGender) bodyInput.vocalGender = completedOptions.vocalGender;
+  if (completedOptions.token) bodyInput.token = completedOptions.token;
+  if (completedOptions.tokenProvider !== undefined) bodyInput.tokenProvider = completedOptions.tokenProvider;
+  if (completedOptions.weirdness !== undefined) bodyInput.weirdness = completedOptions.weirdness;
+  if (completedOptions.styleInfluence !== undefined) bodyInput.styleInfluence = completedOptions.styleInfluence;
+  if (completedOptions.personaId) bodyInput.personaId = completedOptions.personaId;
+  if (completedOptions.coverClipId) bodyInput.coverClipId = completedOptions.coverClipId;
+  if (completedOptions.coverStartS !== undefined) bodyInput.coverStartS = completedOptions.coverStartS;
+  if (completedOptions.coverEndS !== undefined) bodyInput.coverEndS = completedOptions.coverEndS;
+  if (completedOptions.audioInfluence !== undefined) bodyInput.audioInfluence = completedOptions.audioInfluence;
+  if (completedOptions.sessionToken) bodyInput.sessionToken = completedOptions.sessionToken;
+  if (completedOptions.userTier) bodyInput.userTier = completedOptions.userTier;
   const body = buildCreateBody(bodyInput);
   const finalRequestHash = hashCreateBody(body);
-  if (options.live) {
-    const submitter = options.submitter ?? new HttpGenerateSubmitter(options.authOptions ?? {});
+  if (completedOptions.live) {
+    const submitter = completedOptions.submitter ?? new HttpGenerateSubmitter(completedOptions.authOptions ?? {});
     try {
       const result = await submitter.submit(body);
       const updated: RunRecord = {
@@ -81,7 +96,7 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
         clipIds: result.clipIds,
         songUrls: result.songUrls,
         status: "submitted",
-        updatedAt: (options.now ?? new Date()).toISOString()
+        updatedAt: (completedOptions.now ?? new Date()).toISOString()
       };
       if (result.batchId) updated.batchId = result.batchId;
       await options.ledger.upsertRun(updated);
@@ -123,4 +138,54 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
     body
   });
   return ExitCode.ok;
+}
+
+async function withLiveCaptcha(options: CreateCommandOptions): Promise<CreateCommandOptions> {
+  if (!options.live || options.token) return options;
+  if (!options.captchaMinter) {
+    writeJson({
+      ok: false,
+      status: "captcha_required",
+      error: "Usage: create --live requires browser captcha minting or --captcha-token.",
+      recovery: {
+        next_command: "npm install playwright && npx playwright install chromium"
+      }
+    });
+    throw new CommandExit(ExitCode.usage);
+  }
+  try {
+    const minted = await options.captchaMinter.mint(options);
+    return {
+      ...options,
+      token: minted.token,
+      tokenProvider: minted.tokenProvider
+    };
+  } catch (error) {
+    if (isCaptchaMintFailure(error)) {
+      writeJson({
+        ok: false,
+        status: error.status,
+        error: error.message,
+        recovery: error.recovery
+      });
+      throw new CommandExit(error.exitCode);
+    }
+    throw error;
+  }
+}
+
+class CommandExit extends Error {
+  constructor(public readonly code: number) {
+    super(`Command exited with code ${code}`);
+  }
+}
+
+function isCaptchaMintFailure(error: unknown): error is {
+  status: string;
+  message: string;
+  recovery?: unknown;
+  exitCode: number;
+} {
+  const item = error as { status?: unknown; message?: unknown; exitCode?: unknown };
+  return typeof item.status === "string" && typeof item.message === "string" && typeof item.exitCode === "number";
 }
