@@ -1,0 +1,18 @@
+# Defense in depth. package.json "files" already whitelists dist/README/LICENSE,
+# but never publish secrets, user data, or local session state under any path.
+session.json
+cookie.txt
+cookie*.txt
+runs.json
+browser-profile/
+user-data/
+*.pem
+*.key
+.env
+.env.*
+docs/
+.codex/
+.claude/
+
+# Ship runtime only: compiled tests are not part of the published package.
+dist/test/

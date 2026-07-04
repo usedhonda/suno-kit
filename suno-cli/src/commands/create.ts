@@ -3,7 +3,7 @@ import { ClerkAuthOptions } from "../auth/clerk.js";
 import { buildCreateBody, CreateInput, hashCreateBody } from "../create/body.js";
 import { GENERATE_ENDPOINT, GenerateHttpError, GenerateSubmitter, HttpGenerateSubmitter } from "../http/generate.js";
 import { BudgetPolicy, LedgerStore, RunRecord } from "../ledger/store.js";
-import { commandError, ExitCode, writeJson } from "./output.js";
+import { commandError, ExitCode, recoveryForStatus, writeJson } from "./output.js";
 
 export interface CreateCommandOptions extends CreateInput {
   dryRun: boolean;
@@ -119,7 +119,11 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
       return ExitCode.ok;
     } catch (error) {
       if (error instanceof GenerateHttpError) {
-        writeJson(commandError(error.status, error.message, error.details));
+        const recovery = recoveryForStatus(error.status);
+        writeJson({
+          ...commandError(error.status, error.message, error.details),
+          ...(recovery ? { recovery } : {})
+        });
         return error.exitCode;
       }
       throw error;
@@ -166,7 +170,7 @@ async function withLiveCaptcha(options: CreateCommandOptions): Promise<CreateCom
         ok: false,
         status: error.status,
         error: error.message,
-        recovery: error.recovery
+        recovery: recoveryForStatus(error.status) ?? error.recovery
       });
       throw new CommandExit(error.exitCode);
     }

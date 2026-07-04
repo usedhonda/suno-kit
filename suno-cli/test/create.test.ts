@@ -422,6 +422,7 @@ test("create --live returns blocked login when cookie is missing", async () => {
     ]));
     assert.equal(output.code, 30);
     assert.equal(output.json.status, "blocked_login");
+    assert.equal(output.json.recovery.next_command, "suno-cli login");
   } finally {
     restoreEnv("SUNO_KIT_COOKIE", originalCookie);
     restoreEnv("SUNO_KIT_COOKIE_FILE", originalCookieFile);

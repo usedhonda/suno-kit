@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { pathToFileURL } from "node:url";
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createCommandContext } from "./commands/context.js";
 import { createCommand, CreateCommandOptions } from "./commands/create.js";
 import { downloadCommand } from "./commands/download.js";
 import { loginCommand, LoginCommandOptions } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
-import { commandError, ExitCode, classifyError, writeJson } from "./commands/output.js";
+import { commandError, ExitCode, classifyError, recoveryForStatus, statusForExitCode, writeJson } from "./commands/output.js";
 import { resolveTarget } from "./commands/resolve-target.js";
 import { statusCommand } from "./commands/status.js";
 import { urlsCommand } from "./commands/urls.js";
@@ -54,8 +55,11 @@ export async function cliMain(argv: string[]): Promise<number> {
     return await runCli(argv);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    writeJson(commandError("error", redactString(message)));
-    return classifyError(error);
+    const code = classifyError(error);
+    const recovery = recoveryForStatus(statusForExitCode(code));
+    const payload = commandError("error", redactString(message));
+    writeJson(recovery ? { ...payload, recovery } : payload);
+    return code;
   }
 }
 
@@ -348,9 +352,22 @@ function compactAuthOptions(args: ParsedArgs): { dataDir?: string; cookieFile?: 
   return options;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isDirectRun()) {
   cliMain(process.argv.slice(2))
     .then((code) => {
       process.exitCode = code;
     });
+}
+
+// Detect direct execution even when invoked through a symlinked `bin` (npx / global
+// install): argv[1] is the symlink path while import.meta.url is the realpath, so
+// compare resolved realpaths rather than the raw invocation string.
+function isDirectRun(): boolean {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  try {
+    return realpathSync(invoked) === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
 }

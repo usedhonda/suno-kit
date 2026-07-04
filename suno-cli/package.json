@@ -1,15 +1,24 @@
 {
   "name": "@usedhonda/suno-cli",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Suno retrieval and dry-run create CLI.",
+  "license": "MIT",
   "bin": {
     "suno-cli": "./dist/src/cli.js"
   },
+  "files": [
+    "dist/src",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test \"dist/test/**/*.test.js\""
+    "test": "npm run build && node --test \"dist/test/**/*.test.js\"",
+    "prepack": "npm run build"
   },
   "engines": {
     "node": ">=22"
