@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Suno Token Grabber",
+  "version": "0.1.0",
+  "description": "Captures the hCaptcha token Suno mints on Create, so you can paste it into suno-cli --live without hunting the Network tab.",
+  "permissions": ["storage", "clipboardWrite"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Suno Token Grabber"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://suno.com/*", "https://*.suno.com/*"],
+      "js": ["hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://suno.com/*", "https://*.suno.com/*"],
+      "js": ["bridge.js"],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    }
+  ]
+}

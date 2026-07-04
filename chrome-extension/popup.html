@@ -1,0 +1,60 @@
+<!-- popup.html — shown when the toolbar icon is clicked. No external assets. -->
+<meta charset="utf-8" />
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 14px;
+    width: 340px;
+    background: #14151a;
+    color: #e8e8ec;
+  }
+  h1 { font-size: 14px; margin: 0 0 4px; }
+  .status { font-size: 12px; margin: 0 0 12px; color: #9aa0aa; }
+  .status.ok { color: #57d38c; }
+  .status.none { color: #e0a34a; }
+  label { display: block; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .04em; color: #8a909a; margin: 10px 0 3px; }
+  textarea, input {
+    width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace;
+    font-size: 12px; background: #1e2028; color: #e8e8ec;
+    border: 1px solid #2e313c; border-radius: 6px; padding: 6px;
+  }
+  textarea { resize: vertical; }
+  .row { display: flex; gap: 8px; margin-top: 10px; }
+  button {
+    flex: 1; cursor: pointer; font-size: 12px; font-weight: 600;
+    background: #3b6ef5; color: #fff; border: 0; border-radius: 6px;
+    padding: 8px; }
+  button.secondary { background: #2e313c; color: #e8e8ec; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .meta { font-size: 12px; color: #c3c8d2; margin-top: 8px; }
+  .meta b { color: #e8e8ec; }
+  .note { font-size: 11px; color: #8a909a; margin-top: 12px;
+    border-top: 1px solid #2e313c; padding-top: 8px; }
+  .hidden { display: none; }
+</style>
+
+<h1>Suno Token Grabber</h1>
+<p id="status" class="status">Loading…</p>
+
+<div id="content" class="hidden">
+  <label>token</label>
+  <textarea id="token" rows="4" readonly></textarea>
+
+  <div class="meta" id="fields"></div>
+
+  <div class="row">
+    <button id="copyToken">Copy token</button>
+    <button id="copyCmd" class="secondary">Copy suno-cli command</button>
+  </div>
+
+  <p class="note">
+    hCaptcha tokens are single-use and short-lived. The one shown here was
+    likely already consumed by the Create you just ran, so it may not work a
+    second time. Capture a fresh one right before you need it.
+  </p>
+</div>
+
+<script src="popup.js"></script>
