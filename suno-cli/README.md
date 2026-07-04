@@ -14,8 +14,8 @@ Current status:
 
 - Phase1 retrieval is implemented: `status`, `urls`, and `download`.
 - Phase2 create supports safe `--dry-run` body inspection and gated `--live` HTTP submit.
-- `login` persists a session once so that `status`, `urls`, `download`, and `create --live` run with no hand-placed cookie or captcha token.
-- Live create can spend credits. When `--captcha-token` is omitted, it reuses the logged-in browser profile to mint hCaptcha itself.
+- `login` persists a session once so that `status`, `urls`, `download`, and `create --live` resolve auth automatically.
+- Live create can spend credits. It needs an hCaptcha token, which you supply with `--captcha-token` (steps below). Experimental in-browser minting exists, but Suno's bot detection frequently blocks it, so **manual token supply is the reliable path**.
 
 ## Install And Build
 
@@ -55,7 +55,7 @@ node dist/src/cli.js status <clip-id> --data-dir /tmp/suno-kit-test
 
 ## Login (recommended)
 
-Log in once and the CLI persists your session. After that, `status`, `urls`, `download`, and `create --live` resolve auth automatically, and `create --live` mints its captcha in the already logged-in browser profile — no manual cookie or token采取 required.
+Log in once and the CLI persists your session. After that, `status`, `urls`, `download`, and `create --live` resolve auth automatically. For `create --live` you still supply an hCaptcha token with `--captcha-token` (steps below); experimental in-browser minting is attempted when the token is omitted, but Suno's bot detection often blocks it.
 
 ```bash
 node dist/src/cli.js login
@@ -73,15 +73,15 @@ node dist/src/cli.js login --jwt-paste '<copied-__session-jwt>'
 
 The pasted value is never printed back. Do not paste it into chat, issues, logs, or commit history.
 
-### Unattended captcha: `login --cookie-paste`
+### Experimental: `login --cookie-paste`
 
-`create --live` mints hCaptcha in a headless browser. That browser only renders hCaptcha when the mint profile is logged in, so the CLI injects your saved cookies into it. To enable this, persist your **full** `document.cookie` string (not just `__session`):
+In-browser captcha minting only renders hCaptcha when the mint profile is logged in, so the CLI can inject your saved cookies into it. To try it, persist your **full** `document.cookie` string (not just `__session`):
 
 ```bash
 node dist/src/cli.js login --cookie-paste '<the full document.cookie string>'
 ```
 
-Copy it from DevTools Console on a logged-in `https://suno.com` tab by evaluating `document.cookie`. The saved cookies are injected into the mint profile (across `.suno.com` and `suno.com`) so `create --live` can solve captcha with no manual token采取. The pasted value is never printed back; treat it as a secret.
+Copy it from DevTools Console on a logged-in `https://suno.com` tab by evaluating `document.cookie`. The cookies are injected into the mint profile (across `.suno.com` and `suno.com`). **Caveat:** even when fully logged in, Suno's bot detection usually serves an interactive hCaptcha challenge to automation browsers, so unattended minting commonly fails. Prefer manual `--captcha-token`. The pasted value is never printed back; treat it as a secret.
 
 ### logout
 
@@ -295,9 +295,9 @@ node dist/src/cli.js create --live \
 
 #### Captcha Minting And Escape Hatch
 
-The default live path mints hCaptcha in the dedicated browser profile (the same one `login` populates). If browser minting fails, the JSON error distinguishes setup failure (`browser_required`) from captcha timeout (`captcha_required`, usually "not logged in" — its `recovery.next_command` is `suno-cli login`) and generic browser mint failure (`captcha_mint_failed`).
+The live path attempts hCaptcha minting in the dedicated browser profile (the same one `login` populates), but Suno's bot detection usually blocks automation browsers with an interactive challenge, so unattended minting commonly fails. When it fails, the JSON error distinguishes setup failure (`browser_required`) from captcha timeout (`captcha_required`, whose `recovery.next_command` is `suno-cli login`) and generic browser mint failure (`captcha_mint_failed`).
 
-The manual token采取 below is an **advanced, optional escape hatch** — not a required step. With `login` done, `create --live` needs no token flags. Supply a token manually only for debugging; supplied values always win over browser minting:
+**Manual token supply is the reliable path.** The steps below are the recommended way to run `create --live`; supplied values always win over browser minting:
 
 1. Open `https://suno.com/create` while logged in.
 2. Open DevTools -> Network.
