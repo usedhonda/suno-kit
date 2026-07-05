@@ -76,6 +76,9 @@ export class HttpGenerateSubmitter implements GenerateSubmitter {
 async function toGenerateHttpError(response: Response): Promise<GenerateHttpError> {
   const text = await response.text().catch(() => "");
   const details = text ? { httpStatus: response.status, body: text.slice(0, 1000) } : { httpStatus: response.status };
+  if (isCaptchaRequired(text)) {
+    return new GenerateHttpError("blocked_captcha", `Generate request blocked by captcha: HTTP ${response.status}.`, ExitCode.blockedCaptcha, details);
+  }
   if (response.status === 401 || response.status === 403) {
     return new GenerateHttpError("blocked_login", `Generate request blocked by login: HTTP ${response.status}.`, ExitCode.blockedLogin, details);
   }
@@ -86,6 +89,10 @@ async function toGenerateHttpError(response: Response): Promise<GenerateHttpErro
     return new GenerateHttpError("schema_drift", `Generate request rejected: HTTP ${response.status}.`, ExitCode.schemaDrift, details);
   }
   return new GenerateHttpError("retryable_unknown", `Generate request failed: HTTP ${response.status}.`, ExitCode.retryableUnknown, details);
+}
+
+function isCaptchaRequired(text: string): boolean {
+  return /captcha|hcaptcha|turnstile|challenge/i.test(text);
 }
 
 function extractClipIds(payload: unknown): string[] {

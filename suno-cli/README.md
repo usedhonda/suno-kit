@@ -313,6 +313,7 @@ The token has a short TTL. Do not log it, paste it into chat, or commit it. Dry-
 | 0 | `ok` | Success |
 | 2 | `usage` | Bad arguments, missing target, or unknown id |
 | 30 | `blockedLogin` | Missing or unusable Clerk cookie |
+| 31 | `blockedCaptcha` | Suno requires a captcha token for this create request |
 | 32 | `blockedPaymentOrQuota` | Quota/payment/budget/manual gate |
 | 40 | `schemaDrift` | Corrupt ledger, incompatible local state, or unexpected 4xx |
 | 50 | `retryableUnknown` | Network failure, 5xx, or audio not ready |

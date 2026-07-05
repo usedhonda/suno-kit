@@ -4,6 +4,7 @@ export const ExitCode = {
   ok: 0,
   usage: 2,
   blockedLogin: 30,
+  blockedCaptcha: 31,
   blockedPaymentOrQuota: 32,
   schemaDrift: 40,
   retryableUnknown: 50,
@@ -28,9 +29,10 @@ export function commandError(status: string, message: string, details?: unknown)
 export function recoveryForStatus(status: string): { next_command: string } | undefined {
   switch (status) {
     case "blocked_login":
+      return { next_command: "suno-cli login" };
     case "blocked_captcha":
     case "captcha_required":
-      return { next_command: "suno-cli login" };
+      return { next_command: "suno-cli create --live ... --captcha-token <token> --token-provider <integer>" };
     case "browser_required":
       return { next_command: "npm install playwright && npx playwright install chromium" };
     case "blocked_payment_or_quota":
@@ -47,6 +49,8 @@ export function statusForExitCode(code: number): string {
   switch (code) {
     case ExitCode.blockedLogin:
       return "blocked_login";
+    case ExitCode.blockedCaptcha:
+      return "blocked_captcha";
     case ExitCode.blockedPaymentOrQuota:
       return "blocked_payment_or_quota";
     case ExitCode.retryableUnknown:
@@ -61,6 +65,7 @@ export function classifyError(error: unknown): number {
   if (message.includes("cookie is required")) return ExitCode.blockedLogin;
   if (message.startsWith("Usage:")) return ExitCode.usage;
   if (message.includes("Ledger is corrupt")) return ExitCode.schemaDrift;
+  if (/captcha|hcaptcha|turnstile|challenge/i.test(message)) return ExitCode.blockedCaptcha;
   if (message.includes("Budget gate blocked")) return ExitCode.blockedPaymentOrQuota;
   if (message.includes("fetch") || message.includes("network") || message.includes("request failed")) return ExitCode.retryableUnknown;
   return ExitCode.internal;

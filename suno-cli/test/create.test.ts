@@ -519,12 +519,14 @@ test("create --live submits mocked generate request and extracts song URLs", asy
 test("create --live maps mocked generate HTTP failures to stable exit codes", async () => {
   const cases = [
     { status: 401, expected: 30 },
+    { status: 403, expected: 31, payload: { error: "captcha_required" } },
     { status: 402, expected: 32 },
+    { status: 422, expected: 31, payload: { error: "captcha_required" } },
     { status: 500, expected: 50 }
   ];
   for (const item of cases) {
     const tempDir = await fsTempDir();
-    const { restore } = mockLiveFetch(item.status, { error: "blocked" });
+    const { restore } = mockLiveFetch(item.status, item.payload ?? { error: "blocked" });
     try {
       const output = await captureStdout(() => cliMain([
         "create",
@@ -538,6 +540,10 @@ test("create --live maps mocked generate HTTP failures to stable exit codes", as
         "--min-minutes-between-creates", "0"
       ]));
       assert.equal(output.code, item.expected);
+      if (item.expected === 31) {
+        assert.equal(output.json.status, "blocked_captcha");
+        assert.match(output.json.recovery.next_command, /--captcha-token/);
+      }
     } finally {
       restore();
     }
