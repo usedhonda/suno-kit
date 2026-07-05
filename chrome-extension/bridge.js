@@ -19,11 +19,18 @@
     return event.origin === window.location.origin;
   }
 
+  console.log("[stg] bridge.js loaded (ISOLATED world)");
+
   window.addEventListener("message", function (event) {
+    var d = event.data;
+    if (d && d.source === "suno-token-grabber") {
+      console.log("[stg] bridge saw our message; allowed=" + isAllowedMessage(event) + " origin=" + event.origin);
+    }
     // Only accept same-page/same-origin messages, and only ours.
     if (!isAllowedMessage(event)) return;
     var data = event.data;
     if (!data || data.source !== "suno-token-grabber" || !data.payload) return;
+    console.log("[stg] bridge accepted; calling banner");
 
     var record = {
       capturedAt: Date.now(),

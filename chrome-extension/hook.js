@@ -17,6 +17,8 @@
 (function () {
   "use strict";
 
+  console.log("[stg] hook.js loaded (MAIN world)");
+
   var CREATE_MARKER = "/api/generate/v2-web/";
 
   // Pull the raw JWT out of an Authorization header value ("Bearer <jwt>").
