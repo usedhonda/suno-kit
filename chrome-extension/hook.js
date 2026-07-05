@@ -113,6 +113,44 @@
     } catch (e) {}
   }
 
+  function formatDiagnosticValue(value) {
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+    if (typeof value === "string") {
+      return JSON.stringify(value);
+    }
+    return "-";
+  }
+
+  function logCreateCaptchaFacts(body) {
+    try {
+      console.log("[stg] hook: token is null=" + (body.token === null));
+      console.log(
+        "[stg] hook: token_provider type=" + describeShape(body.token_provider) +
+        " value=" + formatDiagnosticValue(body.token_provider)
+      );
+    } catch (e) {}
+  }
+
+  function logCaptchaCheckFacts(stage, body) {
+    try {
+      console.log(
+        "[stg] hook: /api/c/check " + stage +
+        " required type=" + describeShape(body.required) +
+        " value=" + formatDiagnosticValue(body.required)
+      );
+      console.log(
+        "[stg] hook: /api/c/check " + stage +
+        " captcha_version type=" + describeShape(body.captcha_version) +
+        " value=" + formatDiagnosticValue(body.captcha_version)
+      );
+      if (Object.prototype.hasOwnProperty.call(body, "ctype")) {
+        console.log("[stg] hook: /api/c/check " + stage + " ctype type=" + describeShape(body.ctype));
+      }
+    } catch (e) {}
+  }
+
   function reportCaptchaCheck(stage, rawBody) {
     try {
       var parsed = parseBody(rawBody);
@@ -121,6 +159,7 @@
         return;
       }
       logJsonShape("/api/c/check " + stage, parsed);
+      logCaptchaCheckFacts(stage, parsed);
     } catch (e) {}
   }
 
@@ -143,7 +182,7 @@
       var payload = extractPayload(parsed);
       if (!payload) {
         console.log("[stg] hook: no token; token type=" + typeof parsed.token);
-        console.log("[stg] hook: token is null=" + (parsed.token === null));
+        logCreateCaptchaFacts(parsed);
         if (parsed.token && typeof parsed.token === "object") {
           try {
             console.log("[stg] hook: token object keys=" + Object.keys(parsed.token).join(","));
