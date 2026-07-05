@@ -108,6 +108,11 @@
       var payload = extractPayload(parsed);
       if (!payload) {
         console.log("[stg] hook: no token; token type=" + typeof parsed.token);
+        if (parsed.token && typeof parsed.token === "object") {
+          try {
+            console.log("[stg] hook: token object keys=" + Object.keys(parsed.token).join(","));
+          } catch (e) {}
+        }
         return;
       }
       console.log("[stg] hook: payload extracted, posting message");
