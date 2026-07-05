@@ -15,7 +15,7 @@ Current status:
 - Phase1 retrieval is implemented: `status`, `urls`, and `download`.
 - Phase2 create supports safe `--dry-run` body inspection and gated `--live` HTTP submit.
 - `login` persists a session once so that `status`, `urls`, `download`, and `create --live` resolve auth automatically.
-- Live create can spend credits. It needs an hCaptcha token, which you supply with `--captcha-token` (steps below). Experimental in-browser minting exists, but Suno's bot detection frequently blocks it, so **manual token supply is the reliable path**.
+- Live create can spend credits. In trusted sessions observed on 2026-07-06, Suno accepts `token: null` and `token_provider: null`; `--captcha-token` remains an escape hatch if Suno requires captcha.
 
 ## Install And Build
 
@@ -31,7 +31,7 @@ npm run build
 node dist/src/cli.js --help
 ```
 
-`npm install` does not download a browser binary for you. The browser path is only needed for `create --live` without a supplied captcha token:
+`npm install` does not download a browser binary for you. The browser path is only needed for headed `login` and experimental browser flows:
 
 ```bash
 npx playwright install chromium
@@ -55,7 +55,7 @@ node dist/src/cli.js status <clip-id> --data-dir /tmp/suno-kit-test
 
 ## Login (recommended)
 
-Log in once and the CLI persists your session. After that, `status`, `urls`, `download`, and `create --live` resolve auth automatically. For `create --live` you still supply an hCaptcha token with `--captcha-token` (steps below); experimental in-browser minting is attempted when the token is omitted, but Suno's bot detection often blocks it.
+Log in once and the CLI persists your session. After that, `status`, `urls`, `download`, and `create --live` resolve auth automatically. `create --live` now tries the trusted-session path first by sending `token: null` and `token_provider: null`.
 
 ```bash
 node dist/src/cli.js login
@@ -81,7 +81,7 @@ In-browser captcha minting only renders hCaptcha when the mint profile is logged
 node dist/src/cli.js login --cookie-paste '<the full document.cookie string>'
 ```
 
-Copy it from DevTools Console on a logged-in `https://suno.com` tab by evaluating `document.cookie`. The cookies are injected into the mint profile (across `.suno.com` and `suno.com`). **Caveat:** even when fully logged in, Suno's bot detection usually serves an interactive hCaptcha challenge to automation browsers, so unattended minting commonly fails. Prefer manual `--captcha-token`. The pasted value is never printed back; treat it as a secret.
+Copy it from DevTools Console on a logged-in `https://suno.com` tab by evaluating `document.cookie`. The cookies are injected into the mint profile (across `.suno.com` and `suno.com`). **Caveat:** even when fully logged in, Suno's bot detection usually serves an interactive hCaptcha challenge to automation browsers, so unattended minting commonly fails. Prefer the trusted-session `create --live` path first. The pasted value is never printed back; treat it as a secret.
 
 ### logout
 
@@ -262,7 +262,6 @@ It requires:
 
 - a persisted session from `login` (recommended), or an explicit `SUNO_KIT_JWT` / `--jwt` / Clerk cookie (`SUNO_KIT_COOKIE`, `SUNO_KIT_COOKIE_FILE`, `--cookie-file`)
 - `--live`
-- Playwright Chromium installed when `--captcha-token` is omitted
 - explicit owner awareness, because a successful request can spend Suno credits
 
 If you are not logged in, the CLI returns a JSON error whose `recovery.next_command` is `suno-cli login`.
@@ -277,9 +276,7 @@ node dist/src/cli.js create --live \
   --run-id paid-probe-001
 ```
 
-When `--captcha-token` is omitted, the CLI lazy-loads Playwright, opens headless Chromium with the dedicated `~/.local/share/suno-kit/browser-profile/`, installs a block-capture hook before loading `https://suno.com/create`, captures the hCaptcha `token` and integer `token_provider`, closes the browser, then submits the body with `Content-Type: application/json`. On success it records the run in the ledger and returns extracted `clips[].id` values plus `https://suno.com/song/<clip_id>` URLs.
-
-If Playwright or Chromium is missing, the CLI returns a JSON error with `recovery.next_command`.
+When `--captcha-token` is omitted, the CLI submits `token: null` and `token_provider: null`, matching the trusted-session browser body observed on 2026-07-06. On success it records the run in the ledger and returns extracted `clips[].id` values plus `https://suno.com/song/<clip_id>` URLs.
 
 To supply optional live-only metadata, use:
 
@@ -293,11 +290,11 @@ node dist/src/cli.js create --live \
 
 `SUNO_CREATE_SESSION_TOKEN` and `SUNO_USER_TIER` are also read from the environment. If they are not supplied, the corresponding metadata keys are omitted.
 
-#### Captcha Minting And Escape Hatch
+#### Captcha Escape Hatch
 
-The live path attempts hCaptcha minting in the dedicated browser profile (the same one `login` populates), but Suno's bot detection usually blocks automation browsers with an interactive challenge, so unattended minting commonly fails. When it fails, the JSON error distinguishes setup failure (`browser_required`) from captcha timeout (`captcha_required`, whose `recovery.next_command` is `suno-cli login`) and generic browser mint failure (`captcha_mint_failed`).
+The normal live path does not require a captcha token in trusted sessions. If Suno starts requiring captcha for your session, the CLI should fail closed with a structured error instead of retrying around the block.
 
-**Manual token supply is the reliable path.** The steps below are the recommended way to run `create --live`; supplied values always win over browser minting:
+Manual token supply remains as a debugging escape hatch. Supplied values always win over the trusted-session null path:
 
 1. Open `https://suno.com/create` while logged in.
 2. Open DevTools -> Network.
@@ -329,7 +326,7 @@ Errors are JSON and are redacted before output.
 - The persisted session (`session.json`) is written with `0600` permissions and kept outside the repo. `logout` removes it and the browser profile.
 - Runtime data is kept outside the repo by default.
 - `node_modules/` and `dist/` are ignored in this package.
-- Live create is behind `--live` and browser captcha minting because it can spend Suno credits.
+- Live create is behind `--live` because it can spend Suno credits.
 
 ## Cross-OS Smoke Check
 
@@ -351,9 +348,9 @@ Do not run this checklist without explicit owner GO.
 2. Confirm the current credit balance and expected credit cost.
 3. Confirm `npm test` is green.
 4. Confirm `create --dry-run` emits the expected body and reuses `transactionUuid` for retry.
-5. Confirm you are logged in (`suno-cli login`), which also installs the browser profile used for captcha minting. If logging in headless, `suno-cli login --jwt-paste <jwt>` plus `npx playwright install chromium` covers auth and minting.
+5. Confirm you are logged in (`suno-cli login`). If logging in headless, `suno-cli login --jwt-paste <jwt>` covers auth.
 6. Submit exactly one request with `create --live`.
-7. If browser minting fails, use the manual `--captcha-token <token> --token-provider <integer>` escape hatch for one request only.
+7. If Suno rejects the request with a captcha-related block, use the manual `--captcha-token <token> --token-provider <integer>` escape hatch for one request only.
 8. Record the returned `clips[].id` values only; do not log captcha token, Clerk JWT, cookie, or `create_session_token`.
 9. Use `status`, `urls`, and `download` to retrieve results.
 

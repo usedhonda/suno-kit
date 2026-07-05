@@ -9,8 +9,8 @@ export interface CreateInput {
   model?: string;
   vocalGender?: string;
   transactionUuid?: string;
-  token?: string;
-  tokenProvider?: string | number;
+  token?: string | null;
+  tokenProvider?: string | number | null;
   weirdness?: number;
   styleInfluence?: number;
   personaId?: string;
@@ -31,8 +31,8 @@ export interface CreateBody {
   mv: string;
   metadata: Record<string, unknown>;
   transaction_uuid: string;
-  token: string;
-  token_provider: string | number;
+  token: string | null;
+  token_provider: string | number | null;
   override_fields: unknown[];
   task?: "cover";
   persona_id: string | null;
@@ -84,8 +84,8 @@ export function buildCreateBody(input: CreateInput): CreateBody {
     mv: model,
     metadata,
     transaction_uuid: transactionUuid,
-    token: input.token ?? "__DRY_RUN_CAPTCHA_TOKEN__",
-    token_provider: input.tokenProvider ?? "hcaptcha",
+    token: input.token === undefined ? "__DRY_RUN_CAPTCHA_TOKEN__" : input.token,
+    token_provider: input.tokenProvider === undefined ? "hcaptcha" : input.tokenProvider,
     override_fields: [],
     persona_id: input.personaId ?? null,
     cover_clip_id: input.coverClipId ?? null,

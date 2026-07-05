@@ -6,7 +6,6 @@ import { createCommand, CreateCommandOptions } from "./commands/create.js";
 import { downloadCommand } from "./commands/download.js";
 import { loginCommand, LoginCommandOptions } from "./commands/login.js";
 import { logoutCommand } from "./commands/logout.js";
-import { loadSession } from "./auth/session.js";
 import { commandError, ExitCode, classifyError, recoveryForStatus, statusForExitCode, writeJson } from "./commands/output.js";
 import { resolveTarget } from "./commands/resolve-target.js";
 import { statusCommand } from "./commands/status.js";
@@ -147,17 +146,6 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   if (sessionToken) Object.assign(createOptions, { sessionToken });
   if (userTier) Object.assign(createOptions, { userTier });
   if (args.runId) Object.assign(createOptions, { runId: args.runId });
-  if (args.live && !args.captchaToken) {
-    const saved = await loadSession(paths.sessionFile);
-    const browser = await import("./browser/captcha.js");
-    const minterOptions: { profileDir: string; cookieHeader?: string } = {
-      profileDir: paths.browserProfileDir
-    };
-    if (saved?.cookie) minterOptions.cookieHeader = saved.cookie;
-    Object.assign(createOptions, {
-      captchaMinter: browser.createBrowserCaptchaMinter(minterOptions)
-    });
-  }
   return createCommand(createOptions);
 }
 
@@ -309,7 +297,7 @@ function usage(): void {
       "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",
-      "suno-cli create (--dry-run|--live) --title <title> --style <style> [--lyrics <text>|--instrumental] [--exclude <text>] [--captcha-token <token>] [--token-provider <integer>] [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>] [--live uses browser captcha minting when --captcha-token is omitted]"
+      "suno-cli create (--dry-run|--live) --title <title> --style <style> [--lyrics <text>|--instrumental] [--exclude <text>] [--captcha-token <token> --token-provider <integer>] [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]"
     ]
   });
 }

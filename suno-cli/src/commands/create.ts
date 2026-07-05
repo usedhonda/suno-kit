@@ -44,11 +44,16 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
     if (error instanceof CommandExit) return error.code;
     throw error;
   }
-  if (completedOptions.live && completedOptions.tokenProvider === undefined) {
+  if (completedOptions.live && typeof completedOptions.token === "string" && completedOptions.tokenProvider === undefined) {
     writeJson(commandError("usage", "Usage: create --live requires --token-provider <integer>."));
     return ExitCode.usage;
   }
-  if (completedOptions.live && !Number.isSafeInteger(completedOptions.tokenProvider)) {
+  if (
+    completedOptions.live &&
+    completedOptions.tokenProvider !== null &&
+    completedOptions.tokenProvider !== undefined &&
+    !Number.isSafeInteger(completedOptions.tokenProvider)
+  ) {
     writeJson(commandError("usage", "Usage: --token-provider must be an integer for --live."));
     return ExitCode.usage;
   }
@@ -74,7 +79,7 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
   if (completedOptions.instrumental !== undefined) bodyInput.instrumental = completedOptions.instrumental;
   if (completedOptions.model) bodyInput.model = completedOptions.model;
   if (completedOptions.vocalGender) bodyInput.vocalGender = completedOptions.vocalGender;
-  if (completedOptions.token) bodyInput.token = completedOptions.token;
+  if (completedOptions.token !== undefined) bodyInput.token = completedOptions.token;
   if (completedOptions.tokenProvider !== undefined) bodyInput.tokenProvider = completedOptions.tokenProvider;
   if (completedOptions.weirdness !== undefined) bodyInput.weirdness = completedOptions.weirdness;
   if (completedOptions.styleInfluence !== undefined) bodyInput.styleInfluence = completedOptions.styleInfluence;
@@ -147,15 +152,11 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
 async function withLiveCaptcha(options: CreateCommandOptions): Promise<CreateCommandOptions> {
   if (!options.live || options.token) return options;
   if (!options.captchaMinter) {
-    writeJson({
-      ok: false,
-      status: "captcha_required",
-      error: "Usage: create --live requires browser captcha minting or --captcha-token.",
-      recovery: {
-        next_command: "npm install playwright && npx playwright install chromium"
-      }
-    });
-    throw new CommandExit(ExitCode.usage);
+    return {
+      ...options,
+      token: null,
+      tokenProvider: null
+    };
   }
   try {
     const minted = await options.captchaMinter.mint(options);

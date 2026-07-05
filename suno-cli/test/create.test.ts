@@ -38,6 +38,18 @@ test("buildCreateBody maps R6 create fields", () => {
   assert(!("control_sliders" in metadata));
 });
 
+test("buildCreateBody can send explicit null captcha fields", () => {
+  const body = buildCreateBody({
+    title: "verify probe",
+    style: "lo-fi piano",
+    transactionUuid: "tx-null-captcha",
+    token: null,
+    tokenProvider: null
+  });
+  assert.equal(body.token, null);
+  assert.equal(body.token_provider, null);
+});
+
 test("create dry-run maps persona id to top-level persona_id", async () => {
   const tempDir = await fsTempDir();
   const output = await captureStdout(() => cliMain([
@@ -349,25 +361,29 @@ test("create live-fire path is blocked without manual gate", async () => {
   assert.equal(output.json.status, "manual_gate_required");
 });
 
-test("create --live returns browser recovery when captcha token is omitted and browser is unavailable", async () => {
+test("create --live submits null captcha fields when captcha token is omitted", async () => {
   const tempDir = await fsTempDir();
-  // Force "browser unavailable" deterministically, whether or not a Chromium
-  // binary happens to be installed on this machine.
-  const originalBrowsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH;
-  process.env.PLAYWRIGHT_BROWSERS_PATH = path.join(tempDir, "no-browsers");
+  const { restore, getGenerateBody } = mockLiveFetch(200, {
+    id: "batch_null_captcha",
+    clips: [{ id: LIVE_CLIP_ID }]
+  });
   try {
     const output = await captureStdout(() => cliMain([
       "create",
       "--live",
       "--data-dir", tempDir,
       "--title", "verify probe",
-      "--style", "lo-fi piano"
+      "--style", "lo-fi piano",
+      "--run-id", "run_live_null_captcha",
+      "--min-minutes-between-creates", "0"
     ]));
-    assert.equal(output.code, 50);
-    assert.equal(output.json.status, "browser_required");
-    assert.match(output.json.recovery.next_command, /playwright install chromium|npm install playwright/);
+    const submittedBody = getGenerateBody();
+    assert.equal(output.code, 0);
+    assert.equal(output.json.status, "submitted");
+    assert.equal(submittedBody.token, null);
+    assert.equal(submittedBody.token_provider, null);
   } finally {
-    restoreEnv("PLAYWRIGHT_BROWSERS_PATH", originalBrowsersPath);
+    restore();
   }
 });
 
