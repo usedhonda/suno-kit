@@ -54,27 +54,4 @@
       // Extension context may be invalidated (e.g. after reload) — ignore.
     }
   });
-
-  // TEMP debug: auto-show a test banner ~1.5s after load so the render path can
-  // be verified WITHOUT any Console typing. Remove once banner is confirmed.
-  try {
-    var stgAutoTest = function () {
-      console.log("[stg] auto-test firing show()");
-      if (typeof window.__sunoTokenGrabberShowBanner === "function") {
-        window.__sunoTokenGrabberShowBanner({
-          token: "AUTOTEST_token_123456",
-          token_provider: 1,
-          tags: "jazz",
-          title: "autotest"
-        });
-      } else {
-        console.log("[stg] auto-test: show() not found on window");
-      }
-    };
-    if (document.readyState === "complete" || document.readyState === "interactive") {
-      setTimeout(stgAutoTest, 1500);
-    } else {
-      window.addEventListener("load", function () { setTimeout(stgAutoTest, 1500); });
-    }
-  } catch (e) {}
 })();
