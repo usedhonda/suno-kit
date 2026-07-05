@@ -26,25 +26,7 @@
     return String(v == null ? "" : v);
   }
 
-  function shellQuote(v) {
-    // Wrap in double quotes, escaping any embedded double quotes/backslashes.
-    return '"' + String(v == null ? "" : v).replace(/(["\\])/g, "\\$1") + '"';
-  }
-
-  function buildCommand(p) {
-    var title = p.title && String(p.title).trim() ? p.title : "song";
-    var style = p.tags != null ? p.tags : "";
-    var parts = [
-      "node dist/src/cli.js create --live",
-      "--title " + shellQuote(title),
-      "--style " + shellQuote(style),
-      "--captcha-token " + shellQuote(p.token)
-    ];
-    if (p.token_provider !== undefined && p.token_provider !== null) {
-      parts.push("--token-provider " + String(p.token_provider));
-    }
-    return parts.join(" ");
-  }
+  // buildSunoCliCommand() comes from command.js (loaded before this script).
 
   function copy(text, btn, label) {
     navigator.clipboard.writeText(text).then(
@@ -87,7 +69,7 @@
       copy(p.token, copyTokenBtn);
     };
     copyCmdBtn.onclick = function () {
-      copy(buildCommand(p), copyCmdBtn);
+      copy(buildSunoCliCommand(p), copyCmdBtn);
     };
   }
 

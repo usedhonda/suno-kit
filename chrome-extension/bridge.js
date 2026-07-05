@@ -1,8 +1,12 @@
 // bridge.js — runs in the ISOLATED world.
 //
 // The MAIN-world hook (hook.js) cannot touch chrome.storage. This bridge can.
-// It listens for the window.postMessage the hook emits and persists the token
-// into chrome.storage.local so the popup can read it later.
+// It listens for the window.postMessage the hook emits, shows the on-page
+// banner (primary UX), and persists the token into chrome.storage.local so the
+// popup can look it up later (secondary path).
+//
+// banner.js runs before this file (see manifest content_scripts order) and
+// exposes window.__sunoTokenGrabberShowBanner in the same ISOLATED scope.
 
 (function () {
   "use strict";
@@ -19,6 +23,16 @@
       payload: data.payload
     };
 
+    // Primary UX: show the floating banner immediately.
+    try {
+      if (typeof window.__sunoTokenGrabberShowBanner === "function") {
+        window.__sunoTokenGrabberShowBanner(data.payload);
+      }
+    } catch (e) {
+      // Banner is best-effort; never let it block the storage save.
+    }
+
+    // Secondary: persist for the popup "look it up later" path.
     try {
       chrome.storage.local.set({ latestToken: record });
     } catch (e) {

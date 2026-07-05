@@ -17,7 +17,7 @@
     },
     {
       "matches": ["https://suno.com/*", "https://*.suno.com/*"],
-      "js": ["bridge.js"],
+      "js": ["command.js", "banner.js", "bridge.js"],
       "run_at": "document_start",
       "world": "ISOLATED"
     }

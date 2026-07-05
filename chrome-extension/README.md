@@ -22,8 +22,13 @@ body.
   `transaction_uuid`, `tags`, `title`, and `make_instrumental` from the request
   body. It always calls through to the original request, so Suno is unaffected.
 - `bridge.js` runs in the **ISOLATED world**, receives those fields via
-  `window.postMessage`, and stores them in `chrome.storage.local`.
-- `popup.html` / `popup.js` show the captured token and give you copy buttons.
+  `window.postMessage`, shows the on-page banner, and stores the payload in
+  `chrome.storage.local`.
+- `banner.js` (ISOLATED world) draws the floating toast inside a **Shadow DOM**
+  host so its styles never clash with Suno's page.
+- `command.js` is a shared helper that builds the `suno-cli` command; both the
+  banner and the popup use it.
+- `popup.html` / `popup.js` are the secondary "look it up later" path.
 
 > Note: MV3's `webRequest` / `declarativeNetRequest` **cannot read request
 > bodies**, which is why we hook `fetch`/XHR in the MAIN world instead.
@@ -38,17 +43,26 @@ body.
 The "Suno Token Grabber" extension appears in your toolbar. (Pin it for easy
 access.)
 
-## Usage
+## Usage (primary flow — the banner)
 
 1. Go to <https://suno.com/create> and log in as usual.
 2. Set up your song and press **Create** like normal.
-3. Click the **Suno Token Grabber** toolbar icon.
-4. Copy the token, or click **Copy suno-cli command** to get a ready-to-paste
+3. A small **"✓ Suno token captured"** banner slides in at the bottom-right of
+   the page. No need to open the extension icon.
+4. Click **Copy token**, or **Copy suno-cli command** to get a ready-to-paste
    line like:
 
    ```
    node dist/src/cli.js create --live --title "song" --style "lofi, chill" --captcha-token "P1_..." --token-provider 1
    ```
+
+The banner auto-dismisses after ~12 seconds (or click **×** to close it now).
+If you press Create again, a fresh banner replaces the old one.
+
+## Usage (secondary flow — the popup)
+
+If the banner already faded, click the **Suno Token Grabber** toolbar icon to
+see the most recently captured token with the same copy buttons.
 
 ## Known limitation / future work
 
