@@ -93,9 +93,14 @@
     try {
       if (!url || String(url).indexOf(CREATE_MARKER) === -1) return;
       if (String(method).toUpperCase() !== "POST") return;
+      console.log("[stg] hook: CREATE request seen; url=" + url);
       var parsed = parseBody(rawBody);
       var payload = extractPayload(parsed);
-      if (!payload) return;
+      if (!payload) {
+        console.log("[stg] hook: body not parseable or no token; typeof body=" + typeof rawBody);
+        return;
+      }
+      console.log("[stg] hook: payload extracted, posting message");
       // Best-effort: attach the auth JWT if we found an Authorization header.
       var jwt = stripBearer(authHeader);
       if (jwt) payload.authJwt = jwt;
