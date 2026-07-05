@@ -95,9 +95,19 @@
       if (String(method).toUpperCase() !== "POST") return;
       console.log("[stg] hook: CREATE request seen; url=" + url);
       var parsed = parseBody(rawBody);
+      if (!parsed) {
+        var isStr = typeof rawBody === "string";
+        console.log(
+          "[stg] hook: parse failed; isString=" + isStr +
+          " len=" + (isStr ? rawBody.length : "-") +
+          " firstChar=" + (isStr ? JSON.stringify(rawBody.charAt(0)) : "-")
+        );
+        return;
+      }
+      console.log("[stg] hook: parsed OK; keys=" + Object.keys(parsed).join(","));
       var payload = extractPayload(parsed);
       if (!payload) {
-        console.log("[stg] hook: body not parseable or no token; typeof body=" + typeof rawBody);
+        console.log("[stg] hook: no token; token type=" + typeof parsed.token);
         return;
       }
       console.log("[stg] hook: payload extracted, posting message");
