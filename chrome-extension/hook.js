@@ -20,6 +20,7 @@
   console.log("[stg] hook.js loaded (MAIN world)");
 
   var CREATE_MARKER = "/api/generate/v2-web/";
+  var CAPTCHA_CHECK_MARKER = "/api/c/check";
 
   // Pull the raw JWT out of an Authorization header value ("Bearer <jwt>").
   function stripBearer(value) {
@@ -89,6 +90,40 @@
     return null;
   }
 
+  function describeShape(value) {
+    if (value === null) return "null";
+    if (Array.isArray(value)) return "array";
+    return typeof value;
+  }
+
+  function logJsonShape(label, value) {
+    try {
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        console.log("[stg] hook: " + label + " shape=" + describeShape(value));
+        return;
+      }
+      var keys = Object.keys(value);
+      var types = [];
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        types.push(key + ":" + describeShape(value[key]));
+      }
+      console.log("[stg] hook: " + label + " keys=" + keys.join(","));
+      console.log("[stg] hook: " + label + " types=" + types.join(","));
+    } catch (e) {}
+  }
+
+  function reportCaptchaCheck(stage, rawBody) {
+    try {
+      var parsed = parseBody(rawBody);
+      if (!parsed) {
+        console.log("[stg] hook: /api/c/check " + stage + " parse failed; body type=" + typeof rawBody);
+        return;
+      }
+      logJsonShape("/api/c/check " + stage, parsed);
+    } catch (e) {}
+  }
+
   function report(url, method, rawBody, authHeader) {
     try {
       if (!url || String(url).indexOf(CREATE_MARKER) === -1) return;
@@ -108,6 +143,7 @@
       var payload = extractPayload(parsed);
       if (!payload) {
         console.log("[stg] hook: no token; token type=" + typeof parsed.token);
+        console.log("[stg] hook: token is null=" + (parsed.token === null));
         if (parsed.token && typeof parsed.token === "object") {
           try {
             console.log("[stg] hook: token object keys=" + Object.keys(parsed.token).join(","));
@@ -133,14 +169,16 @@
     var originalFetch = window.fetch;
     if (typeof originalFetch === "function") {
       window.fetch = function (input, init) {
+        var url = "";
+        var method = "GET";
         try {
-          var url =
+          url =
             typeof input === "string"
               ? input
               : input && input.url
               ? input.url
               : "";
-          var method =
+          method =
             (init && init.method) ||
             (input && input.method) ||
             "GET";
@@ -148,6 +186,30 @@
             console.log("[stg] fetch passed hook: " + method + " " + url);
           }
           var body = init && init.body;
+          if (String(url).indexOf(CAPTCHA_CHECK_MARKER) !== -1) {
+            console.log("[stg] hook: /api/c/check fetch request seen; method=" + method);
+            if (body !== undefined && body !== null) {
+              reportCaptchaCheck("request", body);
+            } else if (
+              input &&
+              typeof input === "object" &&
+              typeof input.clone === "function"
+            ) {
+              try {
+                input
+                  .clone()
+                  .text()
+                  .then(
+                    function (text) {
+                      reportCaptchaCheck("request", text);
+                    },
+                    function () {}
+                  );
+              } catch (e) {}
+            } else {
+              reportCaptchaCheck("request", body);
+            }
+          }
           // Authorization can live in init.headers or, when input is a
           // Request object, in input.headers. Prefer init, fall back to input.
           var auth = findAuthHeader(init && init.headers);
@@ -182,7 +244,28 @@
           // Observation only — swallow and fall through.
         }
         // Always call the real fetch with the untouched arguments.
-        return originalFetch.apply(this, arguments);
+        var responsePromise = originalFetch.apply(this, arguments);
+        try {
+          if (String(url).indexOf(CAPTCHA_CHECK_MARKER) !== -1) {
+            responsePromise.then(
+              function (response) {
+                try {
+                  response
+                    .clone()
+                    .text()
+                    .then(
+                      function (text) {
+                        reportCaptchaCheck("response", text);
+                      },
+                      function () {}
+                    );
+                } catch (e) {}
+              },
+              function () {}
+            );
+          }
+        } catch (e) {}
+        return responsePromise;
       };
     }
   } catch (e) {
@@ -220,6 +303,15 @@
         try {
           if (String(this.__stgUrl).indexOf("/api/") !== -1) {
             console.log("[stg] xhr passed hook: " + this.__stgMethod + " " + this.__stgUrl);
+          }
+          if (String(this.__stgUrl).indexOf(CAPTCHA_CHECK_MARKER) !== -1) {
+            console.log("[stg] hook: /api/c/check xhr request seen; method=" + this.__stgMethod);
+            reportCaptchaCheck("request", body);
+            this.addEventListener("loadend", function () {
+              try {
+                reportCaptchaCheck("response", this.responseText);
+              } catch (e) {}
+            });
           }
           var auth = findAuthHeader(this.__stgHeaders);
           report(this.__stgUrl, this.__stgMethod, body, auth);
