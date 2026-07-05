@@ -1,9 +1,11 @@
 # Suno Token Grabber
 
-A tiny Chrome extension (Manifest V3) that captures the hCaptcha `token` Suno's
-website mints when you press **Create** — so you can feed it to
-[`suno-cli`](../) `create --live` without opening DevTools and digging through
-the Network tab.
+A tiny Chrome extension (Manifest V3) **for end users of the distributed
+[`@usedhonda/suno-cli`](https://www.npmjs.com/package/@usedhonda/suno-cli)
+package.** It captures the hCaptcha `token` Suno's website mints when you press
+**Create**, plus your Suno auth JWT, and hands you a single `npx` command that
+runs `create --live` — with nothing pre-installed, no `suno-cli login`, and no
+DevTools or Network-tab digging.
 
 ## Why this exists
 
@@ -49,12 +51,20 @@ access.)
 2. Set up your song and press **Create** like normal.
 3. A small **"✓ Suno token captured"** banner slides in at the bottom-right of
    the page. No need to open the extension icon.
-4. Click **Copy token**, or **Copy suno-cli command** to get a ready-to-paste
-   line like:
+4. Click **Copy token**, or **Copy suno-cli command** to get a **complete,
+   one-paste** command like:
 
    ```
-   node dist/src/cli.js create --live --title "song" --style "lofi, chill" --captcha-token "P1_..." --token-provider 1
+   npx --yes @usedhonda/suno-cli create --live --jwt "eyJ..." --title "song" --style "lofi, chill" --captcha-token "P1_..." --token-provider 1
    ```
+
+That single paste runs `create --live` with **auth + captcha + style** all in
+one go, with **nothing pre-installed** — `npx --yes` fetches and runs the
+published `@usedhonda/suno-cli` package, and the captured `--jwt` means no
+separate `suno-cli login`. No DevTools. The extension captures both
+the captcha `token` (from the request body) and your Suno auth JWT (from the
+request's `Authorization: Bearer …` header). If the JWT can't be read for some
+reason, `--jwt` is simply omitted and the CLI falls back to your saved session.
 
 The banner auto-dismisses after ~12 seconds (or click **×** to close it now).
 If you press Create again, a fresh banner replaces the old one.
@@ -63,6 +73,14 @@ If you press Create again, a fresh banner replaces the old one.
 
 If the banner already faded, click the **Suno Token Grabber** toolbar icon to
 see the most recently captured token with the same copy buttons.
+
+## Security warning
+
+The copied command contains your **Suno auth JWT in plaintext** (the `--jwt`
+value). That token authenticates as you. **Only paste it into your own local
+terminal.** Never paste or share the command in chat, issues, gists, pastebins,
+screenshots, or anywhere public — anyone who gets the JWT can act as your Suno
+account until it expires.
 
 ## Known limitation / future work
 

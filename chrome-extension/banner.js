@@ -125,7 +125,8 @@
       '<div class="head"><span class="label">✓ Suno token captured</span>' +
       '<button class="x" title="Dismiss">×</button></div>' +
       '<div class="mono" id="tok"></div>' +
-      '<div class="meta">token_provider: <b id="tp"></b></div>' +
+      '<div class="meta">token_provider: <b id="tp"></b>' +
+      '<span id="auth"></span></div>' +
       '<div class="row">' +
       '<button class="act" id="copyTok">Copy token</button>' +
       '<button class="act sec" id="copyCmd">Copy suno-cli command</button>' +
@@ -133,6 +134,9 @@
 
     shadow.getElementById("tok").textContent = truncate(payload.token);
     shadow.getElementById("tp").textContent = tp;
+    if (payload.authJwt) {
+      shadow.getElementById("auth").textContent = "  ·  incl. auth";
+    }
 
     shadow.querySelector(".x").addEventListener("click", dismiss);
 

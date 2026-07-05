@@ -19,6 +19,47 @@
 
   var CREATE_MARKER = "/api/generate/v2-web/";
 
+  // Pull the raw JWT out of an Authorization header value ("Bearer <jwt>").
+  function stripBearer(value) {
+    if (typeof value !== "string" || value.length === 0) return null;
+    var m = value.match(/^\s*Bearer\s+(.+)\s*$/i);
+    return m ? m[1] : value;
+  }
+
+  // Find the Authorization header across the shapes fetch/XHR can hand us:
+  // a Headers instance, a plain object, or an array of [key, value] pairs.
+  function findAuthHeader(headers) {
+    try {
+      if (!headers) return null;
+      // Headers instance (has a .get method).
+      if (typeof headers.get === "function") {
+        return headers.get("authorization");
+      }
+      // Array of [key, value] pairs.
+      if (Array.isArray(headers)) {
+        for (var i = 0; i < headers.length; i++) {
+          var pair = headers[i];
+          if (pair && String(pair[0]).toLowerCase() === "authorization") {
+            return pair[1];
+          }
+        }
+        return null;
+      }
+      // Plain object — case-insensitive key lookup.
+      if (typeof headers === "object") {
+        for (var k in headers) {
+          if (
+            Object.prototype.hasOwnProperty.call(headers, k) &&
+            k.toLowerCase() === "authorization"
+          ) {
+            return headers[k];
+          }
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
   // Pull the fields suno-cli cares about out of the parsed request body.
   function extractPayload(body) {
     if (!body || typeof body !== "object") return null;
@@ -46,13 +87,16 @@
     return null;
   }
 
-  function report(url, method, rawBody) {
+  function report(url, method, rawBody, authHeader) {
     try {
       if (!url || String(url).indexOf(CREATE_MARKER) === -1) return;
       if (String(method).toUpperCase() !== "POST") return;
       var parsed = parseBody(rawBody);
       var payload = extractPayload(parsed);
       if (!payload) return;
+      // Best-effort: attach the auth JWT if we found an Authorization header.
+      var jwt = stripBearer(authHeader);
+      if (jwt) payload.authJwt = jwt;
       window.postMessage(
         { source: "suno-token-grabber", payload: payload },
         "*"
@@ -79,7 +123,13 @@
             (input && input.method) ||
             "GET";
           var body = init && init.body;
-          report(url, method, body);
+          // Authorization can live in init.headers or, when input is a
+          // Request object, in input.headers. Prefer init, fall back to input.
+          var auth = findAuthHeader(init && init.headers);
+          if (!auth && input && typeof input === "object" && input.headers) {
+            auth = findAuthHeader(input.headers);
+          }
+          report(url, method, body, auth);
         } catch (e) {
           // Observation only — swallow and fall through.
         }
@@ -98,18 +148,30 @@
     if (XHR && XHR.prototype) {
       var originalOpen = XHR.prototype.open;
       var originalSend = XHR.prototype.send;
+      var originalSetHeader = XHR.prototype.setRequestHeader;
 
       XHR.prototype.open = function (method, url) {
         try {
           this.__stgMethod = method;
           this.__stgUrl = url;
+          this.__stgHeaders = {}; // reset per request
         } catch (e) {}
         return originalOpen.apply(this, arguments);
       };
 
+      // Stash every header the page sets, so send() can read Authorization.
+      XHR.prototype.setRequestHeader = function (name, value) {
+        try {
+          if (!this.__stgHeaders) this.__stgHeaders = {};
+          this.__stgHeaders[name] = value;
+        } catch (e) {}
+        return originalSetHeader.apply(this, arguments);
+      };
+
       XHR.prototype.send = function (body) {
         try {
-          report(this.__stgUrl, this.__stgMethod, body);
+          var auth = findAuthHeader(this.__stgHeaders);
+          report(this.__stgUrl, this.__stgMethod, body, auth);
         } catch (e) {}
         // Always forward to the real send with the original body.
         return originalSend.apply(this, arguments);

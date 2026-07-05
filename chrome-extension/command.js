@@ -13,12 +13,17 @@ function stgShellQuote(v) {
 function buildSunoCliCommand(p) {
   var title = p.title && String(p.title).trim() ? p.title : "song";
   var style = p.tags != null ? p.tags : "";
-  var parts = [
-    "node dist/src/cli.js create --live",
-    "--title " + stgShellQuote(title),
-    "--style " + stgShellQuote(style),
-    "--captcha-token " + stgShellQuote(p.token)
-  ];
+  // Target distributed users: npx fetches + runs the published npm package
+  // with zero prior install (--yes skips the install prompt).
+  var parts = ["npx --yes @usedhonda/suno-cli create --live"];
+  // When the auth JWT was captured, include it so one paste sets up auth too.
+  // Absent => command omits --jwt and the CLI falls back to a saved session.
+  if (p.authJwt) {
+    parts.push("--jwt " + stgShellQuote(p.authJwt));
+  }
+  parts.push("--title " + stgShellQuote(title));
+  parts.push("--style " + stgShellQuote(style));
+  parts.push("--captcha-token " + stgShellQuote(p.token));
   if (p.token_provider !== undefined && p.token_provider !== null) {
     parts.push("--token-provider " + String(p.token_provider));
   }
