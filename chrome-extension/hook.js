@@ -129,6 +129,9 @@
             (init && init.method) ||
             (input && input.method) ||
             "GET";
+          if (String(url).indexOf("/api/") !== -1) {
+            console.log("[stg] fetch passed hook: " + method + " " + url);
+          }
           var body = init && init.body;
           // Authorization can live in init.headers or, when input is a
           // Request object, in input.headers. Prefer init, fall back to input.
@@ -177,6 +180,9 @@
 
       XHR.prototype.send = function (body) {
         try {
+          if (String(this.__stgUrl).indexOf("/api/") !== -1) {
+            console.log("[stg] xhr passed hook: " + this.__stgMethod + " " + this.__stgUrl);
+          }
           var auth = findAuthHeader(this.__stgHeaders);
           report(this.__stgUrl, this.__stgMethod, body, auth);
         } catch (e) {}
