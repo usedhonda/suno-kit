@@ -78,9 +78,20 @@
     return s.length > 16 ? s.slice(0, 16) + "…" : s;
   }
 
+  function whenBodyReady(fn) {
+    if (document.body) {
+      fn();
+      return;
+    }
+    document.addEventListener("DOMContentLoaded", fn, { once: true });
+  }
+
   function show(payload) {
     if (!payload || !payload.token) return;
-    if (!document.body) return;
+    if (!document.body) {
+      whenBodyReady(function () { show(payload); });
+      return;
+    }
 
     clearExisting();
 

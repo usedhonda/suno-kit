@@ -11,9 +11,17 @@
 (function () {
   "use strict";
 
+  function isAllowedMessage(event) {
+    // Across Chrome extension MAIN/ISOLATED worlds, WindowProxy identity can
+    // fail a strict `event.source === window` check even for same page messages.
+    // Keep cross-origin frames out, but accept Suno same-origin page messages.
+    if (event.source === window) return true;
+    return event.origin === window.location.origin;
+  }
+
   window.addEventListener("message", function (event) {
-    // Only accept messages from this same window (the page), and only ours.
-    if (event.source !== window) return;
+    // Only accept same-page/same-origin messages, and only ours.
+    if (!isAllowedMessage(event)) return;
     var data = event.data;
     if (!data || data.source !== "suno-token-grabber" || !data.payload) return;
 
