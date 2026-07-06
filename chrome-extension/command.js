@@ -13,8 +13,8 @@ function stgShellQuote(v) {
 function buildSunoCliCommand(p) {
   var title = p.title && String(p.title).trim() ? p.title : "song";
   var style = p.tags != null ? p.tags : "";
-  // Target distributed users: npx fetches + runs the published npm package
-  // with zero prior install (--yes skips the install prompt).
+  // Advanced escape hatch: npx fetches and runs the published package
+  // without a global install (--yes skips the install prompt).
   var parts = ["npx --yes @usedhonda/suno-cli create --live"];
   // When the auth JWT was captured, include it so one paste sets up auth too.
   // Absent => command omits --jwt and the CLI falls back to a saved session.

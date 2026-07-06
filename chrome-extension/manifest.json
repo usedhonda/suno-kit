@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Suno Token Grabber",
-  "version": "0.2.11",
-  "description": "Captures the hCaptcha token Suno mints on Create, so you can paste it into suno-cli --live without hunting the Network tab.",
+  "name": "Suno Captcha Helper",
+  "version": "0.2.12",
+  "description": "Experimental helper for suno-cli captcha-required troubleshooting.",
   "permissions": ["storage", "clipboardWrite"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Suno Token Grabber"
+    "default_title": "Suno Captcha Helper"
   },
   "content_scripts": [
     {

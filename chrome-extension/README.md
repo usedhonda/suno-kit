@@ -1,101 +1,49 @@
-# Suno Token Grabber
+# Suno Captcha Helper
 
-A tiny Chrome extension (Manifest V3) **for end users of the distributed
-[`@usedhonda/suno-cli`](https://www.npmjs.com/package/@usedhonda/suno-cli)
-package.** It captures the hCaptcha `token` Suno's website mints when you press
-**Create**, plus your Suno auth JWT, and hands you a single `npx` command that
-runs `create --live` — with nothing pre-installed, no `suno-cli login`, and no
-DevTools or Network-tab digging.
+Experimental Chrome extension for `suno-cli` troubleshooting when Suno returns `blocked_captcha` (exit code 31).
 
-## Why this exists
+Most users should not install this extension. The normal `suno-cli` flow is:
 
-The hCaptcha token that Suno's `/api/generate/v2-web/` request carries can only
-be minted by a real, human-trusted browser. hCaptcha's bot detection blocks
-automation browsers, so you can't script it headlessly. But this extension runs
-**inside your real Chrome**, where hCaptcha already trusts you. It just watches
-the request the page already sends and reads the `token` field out of the JSON
-body.
+```bash
+suno-cli login
+suno-cli create --live --title "song" --style "lo-fi piano"
+```
 
-## How it works (short version)
+Use this extension only when the CLI explicitly reports that Suno requires a captcha token and you want to inspect the browser request path.
 
-- `hook.js` runs in the page's **MAIN world** at `document_start` and wraps
-  `window.fetch` and `XMLHttpRequest.prototype.send`. When it sees a `POST` to a
-  URL containing `/api/generate/v2-web/`, it reads `token`, `token_provider`,
-  `transaction_uuid`, `tags`, `title`, and `make_instrumental` from the request
-  body. It always calls through to the original request, so Suno is unaffected.
-- `bridge.js` runs in the **ISOLATED world**, receives those fields via
-  `window.postMessage`, shows the on-page banner, and stores the payload in
-  `chrome.storage.local`.
-- `banner.js` (ISOLATED world) draws the floating toast inside a **Shadow DOM**
-  host so its styles never clash with Suno's page.
-- `command.js` is a shared helper that builds the `suno-cli` command; both the
-  banner and the popup use it.
-- `popup.html` / `popup.js` are the secondary "look it up later" path.
+## What It Does
 
-> Note: MV3's `webRequest` / `declarativeNetRequest` **cannot read request
-> bodies**, which is why we hook `fetch`/XHR in the MAIN world instead.
+- Runs on `https://suno.com/*`.
+- Watches the page's own `fetch` and XHR calls for `POST /api/generate/v2-web/`.
+- If that request contains a string captcha `token`, it stores the token payload in `chrome.storage.local`.
+- Shows a small on-page banner and popup with copy buttons.
+
+The extension does not solve captcha challenges. It only observes a token that Suno's own page already placed in the create request.
 
 ## Install
 
-1. Open `chrome://extensions` in Chrome.
-2. Turn on **Developer mode** (top-right toggle).
-3. Click **Load unpacked**.
+1. Open `chrome://extensions`.
+2. Turn on Developer mode.
+3. Click Load unpacked.
 4. Select this `chrome-extension/` folder.
 
-The "Suno Token Grabber" extension appears in your toolbar. (Pin it for easy
-access.)
+## Usage
 
-## Usage (primary flow — the banner)
+1. Keep using Suno normally in Chrome.
+2. If the CLI reports `blocked_captcha`, open `https://suno.com/create`.
+3. Trigger one owner-approved browser Create attempt.
+4. If Suno's request contains a usable captcha token, the extension shows a banner.
+5. Use the copied token only for an advanced `suno-cli create --live --captcha-token ... --token-provider ...` retry.
 
-1. Go to <https://suno.com/create> and log in as usual.
-2. Set up your song and press **Create** like normal.
-3. A small **"✓ Suno token captured"** banner slides in at the bottom-right of
-   the page. No need to open the extension icon.
-4. Click **Copy token**, or **Copy suno-cli command** to get a **complete,
-   one-paste** command like:
+Captcha tokens are short-lived and may be single-use. The browser Create attempt may already consume the token.
 
-   ```
-   npx --yes @usedhonda/suno-cli create --live --jwt "eyJ..." --title "song" --style "lofi, chill" --captcha-token "P1_..." --token-provider 1
-   ```
+## Security Warning
 
-That single paste runs `create --live` with **auth + captcha + style** all in
-one go, with **nothing pre-installed** — `npx --yes` fetches and runs the
-published `@usedhonda/suno-cli` package, and the captured `--jwt` means no
-separate `suno-cli login`. No DevTools. The extension captures both
-the captcha `token` (from the request body) and your Suno auth JWT (from the
-request's `Authorization: Bearer …` header). If the JWT can't be read for some
-reason, `--jwt` is simply omitted and the CLI falls back to your saved session.
-
-The banner auto-dismisses after ~12 seconds (or click **×** to close it now).
-If you press Create again, a fresh banner replaces the old one.
-
-## Usage (secondary flow — the popup)
-
-If the banner already faded, click the **Suno Token Grabber** toolbar icon to
-see the most recently captured token with the same copy buttons.
-
-## Security warning
-
-The copied command contains your **Suno auth JWT in plaintext** (the `--jwt`
-value). That token authenticates as you. **Only paste it into your own local
-terminal.** Never paste or share the command in chat, issues, gists, pastebins,
-screenshots, or anywhere public — anyone who gets the JWT can act as your Suno
-account until it expires.
-
-## Known limitation / future work
-
-hCaptcha tokens are **single-use and short-lived**. The token this extension
-captures was generated by the Create you *just performed*, which likely already
-consumed it — so it may not work a second time on the CLI.
-
-A future enhancement would **intercept the request before it's sent** (pause the
-Create, hand the fresh token to the CLI, then release or cancel), so the CLI
-gets a token that hasn't been spent yet. For now, treat the captured token as a
-"grab the freshest one and use it immediately" helper.
+The advanced command can include your Suno auth JWT and captcha token. Treat both as secrets. Only paste them into your own local terminal. Never paste them into chat, issues, logs, screenshots, gists, or public places.
 
 ## Permissions
 
-- `storage` — to persist the last captured token for the popup.
-- `clipboardWrite` — for the copy buttons.
+- `storage`: keep the most recent captured payload for the popup.
+- `clipboardWrite`: support copy buttons.
 
-No external requests, no CDNs, no build step. Everything is plain JS/HTML/CSS.
+No external requests, no CDN, no build step. Everything is plain JS/HTML/CSS.

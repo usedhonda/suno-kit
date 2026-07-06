@@ -87,7 +87,6 @@
   }
 
   function show(payload) {
-    console.log("[stg] banner show() called; token=" + (payload && payload.token) + " bodyReady=" + !!document.body);
     if (!payload || !payload.token) return;
     if (!document.body) {
       whenBodyReady(function () { show(payload); });
@@ -167,7 +166,6 @@
     });
 
     document.body.appendChild(host);
-    console.log("[stg] banner appended to DOM");
     state.host = host;
 
     // Trigger the fade-in on the next frame.
