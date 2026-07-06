@@ -2,7 +2,7 @@
   "name": "@usedhonda/suno-cli",
   "version": "0.1.0",
   "type": "module",
-  "description": "Suno retrieval and dry-run create CLI.",
+  "description": "Suno create and retrieval CLI.",
   "license": "MIT",
   "bin": {
     "suno-cli": "./dist/src/cli.js"
