@@ -28,6 +28,7 @@ interface ParsedArgs {
   timeoutMs?: number | undefined;
   dryRun?: boolean | undefined;
   live?: boolean | undefined;
+  mintCheck?: boolean | undefined;
   title?: string | undefined;
   style?: string | undefined;
   exclude?: string | undefined;
@@ -117,7 +118,7 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   const ledger = new LedgerStore(paths.ledgerPath);
   const createOptions: CreateCommandOptions = {
     dryRun: Boolean(args.dryRun),
-    live: Boolean(args.live),
+    live: Boolean(args.live || args.mintCheck),
     title: args.title ?? "",
     style: args.style ?? "",
     ledger,
@@ -146,6 +147,7 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   if (sessionToken) Object.assign(createOptions, { sessionToken });
   if (userTier) Object.assign(createOptions, { userTier });
   if (args.runId) Object.assign(createOptions, { runId: args.runId });
+  if (args.mintCheck) Object.assign(createOptions, { mintCheck: true });
   // Auto-mint captcha for live create. When no --captcha-token is supplied we drive
   // the logged-in browser profile from `suno-cli login` so Suno's own invisible
   // hCaptcha mints a token. rebrowser-playwright (loaded in captcha.ts) avoids the
@@ -224,6 +226,8 @@ function parseArgs(argv: string[]): ParsedArgs {
       result.dryRun = true;
     } else if (arg === "--live") {
       result.live = true;
+    } else if (arg === "--mint-check") {
+      result.mintCheck = true;
     } else if (arg === "--title") {
       result.title = argv[index + 1];
       index += 1;
@@ -310,6 +314,7 @@ function usage(): void {
       "suno-cli logout [--data-dir <dir>]",
       "suno-cli create --live --title <title> --style <style> [--lyrics <text>|--instrumental]",
       "suno-cli create --dry-run --title <title> --style <style> [--lyrics <text>|--instrumental]",
+      "suno-cli create --mint-check --title <title> --style <style>  (free: verify captcha mint, no submit)",
       "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",

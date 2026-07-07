@@ -14,6 +14,9 @@ export interface CreateCommandOptions extends CreateInput {
   authOptions?: ClerkAuthOptions;
   submitter?: GenerateSubmitter;
   captchaMinter?: CaptchaMinter;
+  // When true, run the browser captcha mint and report whether a token was
+  // obtained, then stop before the paid generate submit. Free verification path.
+  mintCheck?: boolean;
   now?: Date;
 }
 
@@ -43,6 +46,19 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
   } catch (error) {
     if (error instanceof CommandExit) return error.code;
     throw error;
+  }
+  if (completedOptions.mintCheck) {
+    const token = typeof completedOptions.token === "string" ? completedOptions.token : "";
+    const minted = token.length > 0;
+    writeJson({
+      ok: minted,
+      status: minted ? "captcha_mint_ok" : "captcha_mint_empty",
+      minted,
+      tokenLength: token.length,
+      tokenProvider: completedOptions.tokenProvider ?? null,
+      note: "Mint-only check: no generate request was submitted and no credits were spent."
+    });
+    return minted ? ExitCode.ok : ExitCode.retryableUnknown;
   }
   if (completedOptions.live && typeof completedOptions.token === "string" && completedOptions.tokenProvider === undefined) {
     writeJson(commandError("usage", "Usage: create --live requires --token-provider <integer>."));
