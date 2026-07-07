@@ -86,7 +86,7 @@ interface BrowserRequest {
 const DEFAULT_CREATE_URL = "https://suno.com/create";
 const DEFAULT_TIMEOUT_MS = 45_000;
 const INSTALL_RECOVERY = {
-  next_command: "npm install playwright && npx playwright install chromium"
+  next_command: "npm install rebrowser-playwright && npx rebrowser-playwright install chromium"
 };
 
 export function createBrowserCaptchaMinter(options: BrowserCaptchaMintOptions): BrowserCaptchaMinter {
@@ -306,17 +306,26 @@ function firstString(record: Record<string, unknown>, keys: string[]): string | 
 }
 
 async function loadPlaywright(): Promise<PlaywrightModule> {
-  try {
-    const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<PlaywrightModule>;
-    return await dynamicImport("playwright");
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new BrowserCaptchaMintError(
-      "browser_required",
-      `Playwright is not installed or cannot be loaded: ${message}`,
-      INSTALL_RECOVERY
-    );
+  const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<PlaywrightModule>;
+  // Prefer rebrowser-playwright: it patches the CDP `Runtime.enable` leak that
+  // Suno's invisible hCaptcha uses to flag automation. Stock playwright is
+  // detected and yields an invalid token (HTTP 422). Fall back to stock only if
+  // the patched build is not installed.
+  const candidates = ["rebrowser-playwright", "playwright"];
+  let lastError: unknown;
+  for (const specifier of candidates) {
+    try {
+      return await dynamicImport(specifier);
+    } catch (error) {
+      lastError = error;
+    }
   }
+  const message = lastError instanceof Error ? lastError.message : String(lastError);
+  throw new BrowserCaptchaMintError(
+    "browser_required",
+    `Playwright is not installed or cannot be loaded: ${message}`,
+    INSTALL_RECOVERY
+  );
 }
 
 const CAPTURE_INIT_SCRIPT = `

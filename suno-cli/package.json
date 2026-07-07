@@ -33,6 +33,7 @@
     "typescript": "^5.8.3"
   },
   "optionalDependencies": {
-    "playwright": "^1.53.0"
+    "playwright": "^1.53.0",
+    "rebrowser-playwright": "^1.52.0"
   }
 }

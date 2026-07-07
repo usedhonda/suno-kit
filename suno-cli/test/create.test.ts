@@ -361,10 +361,13 @@ test("create live-fire path is blocked without manual gate", async () => {
   assert.equal(output.json.status, "manual_gate_required");
 });
 
-test("create --live submits null captcha fields when captcha token is omitted", async () => {
+// When --captcha-token is supplied, the browser auto-mint is skipped and the
+// provided token is submitted verbatim. (Omitting the token now triggers the
+// browser captcha mint, which is exercised live rather than in this unit suite.)
+test("create --live submits the supplied captcha token", async () => {
   const tempDir = await fsTempDir();
   const { restore, getGenerateBody } = mockLiveFetch(200, {
-    id: "batch_null_captcha",
+    id: "batch_explicit_captcha",
     clips: [{ id: LIVE_CLIP_ID }]
   });
   try {
@@ -374,14 +377,16 @@ test("create --live submits null captcha fields when captcha token is omitted", 
       "--data-dir", tempDir,
       "--title", "verify probe",
       "--style", "lo-fi piano",
-      "--run-id", "run_live_null_captcha",
+      "--captcha-token", "tok_test_123",
+      "--token-provider", "1",
+      "--run-id", "run_live_explicit_captcha",
       "--min-minutes-between-creates", "0"
     ]));
     const submittedBody = getGenerateBody();
     assert.equal(output.code, 0);
     assert.equal(output.json.status, "submitted");
-    assert.equal(submittedBody.token, null);
-    assert.equal(submittedBody.token_provider, null);
+    assert.equal(submittedBody.token, "tok_test_123");
+    assert.equal(submittedBody.token_provider, 1);
   } finally {
     restore();
   }
