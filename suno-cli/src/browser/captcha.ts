@@ -86,7 +86,7 @@ interface BrowserRequest {
 const DEFAULT_CREATE_URL = "https://suno.com/create";
 const DEFAULT_TIMEOUT_MS = 45_000;
 const INSTALL_RECOVERY = {
-  next_command: "npm install rebrowser-playwright && npx rebrowser-playwright install chromium"
+  next_command: "npm install && npx playwright install chromium"
 };
 
 export function createBrowserCaptchaMinter(options: BrowserCaptchaMintOptions): BrowserCaptchaMinter {
