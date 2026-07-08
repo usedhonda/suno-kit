@@ -25,7 +25,10 @@ export interface LoginCommandOptions {
 }
 
 const DEFAULT_LOGIN_URL = "https://suno.com/";
-const DEFAULT_TIMEOUT_MS = 120_000;
+// 5 minutes: first-time interactive login (email/OAuth, possibly MFA) needs
+// comfortable headroom. The persistent browser profile keeps the session even
+// if the capture races, but a generous window avoids false login_timeout.
+const DEFAULT_TIMEOUT_MS = 300_000;
 const INSTALL_RECOVERY = {
   next_command: "npm install playwright && npx playwright install chromium"
 };

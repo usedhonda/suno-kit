@@ -73,6 +73,7 @@ interface Page {
   goto(url: string, options: Record<string, unknown>): Promise<unknown>;
   evaluate<T>(callback: () => T | Promise<T>): Promise<T>;
   evaluate<T, A>(callback: (arg: A) => T | Promise<T>, arg: A): Promise<T>;
+  waitForTimeout(ms: number): Promise<void>;
 }
 
 interface Route {
@@ -84,7 +85,10 @@ interface BrowserRequest {
 }
 
 const DEFAULT_CREATE_URL = "https://suno.com/create";
-const DEFAULT_TIMEOUT_MS = 45_000;
+// Generous window: the browser is headful, so if Suno shows an hCaptcha
+// challenge the user solves it by hand before Suno fires the generate request
+// we capture the token from. Invisible passes finish in a few seconds.
+const DEFAULT_TIMEOUT_MS = 180_000;
 const INSTALL_RECOVERY = {
   next_command: "npm install && npx playwright install chromium"
 };
@@ -100,7 +104,9 @@ export async function launchPersistentBrowser(options: BrowserLaunchOptions): Pr
   await fs.mkdir(options.profileDir, { recursive: true });
   return playwright.chromium.launchPersistentContext(options.profileDir, {
     headless: options.headless ?? true,
-    viewport: options.viewport ?? { width: 1280, height: 900 }
+    viewport: options.viewport ?? { width: 1280, height: 900 },
+    // Force English UI so the form/button selectors are deterministic.
+    locale: "en-US"
   });
 }
 
@@ -127,7 +133,9 @@ export async function mintBrowserCaptcha(
     await page.exposeBinding("__sunoCliCaptureCaptcha", (_source, payload) => {
       capture.accept(payload);
     });
-    await page.route("**/api/generate/v2-web/**", async (route, request) => {
+    // Match any generate sub-path (not just v2-web) so a paid create can never
+    // slip through un-aborted while we only wanted to mint the token from it.
+    await page.route("**/api/generate/**", async (route, request) => {
       capture.accept(parseMaybeJson(request.postData()));
       await route.abort("blockedbyclient");
     });
@@ -184,46 +192,69 @@ export function parseCookieHeader(cookieHeader: string): CookieParam[] {
     ]);
 }
 
-// Drive the create form so Suno renders and solves hCaptcha itself. Best-effort:
-// failures fall through to the capture timeout (surfaced as captcha_required).
+// Drive the create form so Suno renders and runs hCaptcha itself. rebrowser
+// disables Playwright's selector engine (native fill/click/locators hang), so
+// every DOM step is a short synchronous page.evaluate with waits driven from
+// here. React can drop a single programmatic value set, so we refill on each
+// poll until the "Create song" button enables, then click it. If Suno shows a
+// visible hCaptcha challenge, the user solves it in the headful window; the
+// generate request (and its captcha token) is captured by the route hook.
 async function triggerGenerateFlow(page: Page, style: string): Promise<void> {
-  await page
-    .evaluate(async (styleText: string): Promise<string> => {
-      const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-      const findStyleTextarea = (): HTMLTextAreaElement | null => {
-        const areas = Array.from(document.querySelectorAll("textarea"));
-        return areas.find((el) => (el.placeholder ?? "").includes("オーケストレーション")) ?? null;
-      };
-      let textarea: HTMLTextAreaElement | null = null;
-      for (let attempt = 0; attempt < 40; attempt += 1) {
-        textarea = findStyleTextarea();
-        if (textarea) break;
-        await wait(500);
+  const evalSafe = async <T>(fn: (arg: string) => T, arg = ""): Promise<T | undefined> => {
+    for (let i = 0; i < 8; i += 1) {
+      try {
+        return await page.evaluate(fn, arg);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/destroyed|navigation|Target closed/i.test(message)) {
+          await page.waitForTimeout(1200);
+          continue;
+        }
+        return undefined;
       }
-      if (!textarea) return "no_style_textarea";
+    }
+    return undefined;
+  };
+
+  // Wait for the create form to render.
+  for (let i = 0; i < 20; i += 1) {
+    const count = await evalSafe(() => document.querySelectorAll("textarea").length);
+    if (typeof count === "number" && count >= 2) break;
+    await page.waitForTimeout(1000);
+  }
+
+  // Refill each poll until the "Create song" button enables (React can drop a
+  // single set; the style field is the one with a comma-list placeholder).
+  for (let i = 0; i < 20; i += 1) {
+    const state = await evalSafe((styleText) => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set;
-      if (setter) setter.call(textarea, styleText);
-      else textarea.value = styleText;
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
-      await wait(300);
-      const findCreateButton = (): HTMLButtonElement | null => {
-        const buttons = Array.from(document.querySelectorAll("button"));
-        return buttons.find((button) => {
-          const label = `${button.textContent ?? ""} ${button.getAttribute("aria-label") ?? ""}`;
-          return label.includes("を作成") && !button.disabled;
-        }) ?? null;
-      };
-      let createButton: HTMLButtonElement | null = null;
-      for (let attempt = 0; attempt < 20; attempt += 1) {
-        createButton = findCreateButton();
-        if (createButton) break;
-        await wait(500);
-      }
-      if (!createButton) return "no_create_button";
-      createButton.click();
-      return "triggered";
-    }, style)
-    .catch(() => "trigger_error");
+      const areas = Array.from(document.querySelectorAll("textarea")) as HTMLTextAreaElement[];
+      areas.forEach((el, index) => {
+        if ((el.getAttribute("aria-label") ?? "") === "Cowriter prompt") return;
+        const value = (el.placeholder ?? "").includes(",") || index === 1 ? styleText : "an instrumental track";
+        if (setter) setter.call(el, value);
+        else el.value = value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      const button = Array.from(document.querySelectorAll("button")).find((b) =>
+        /create song/i.test(b.getAttribute("aria-label") ?? "")
+      ) as HTMLButtonElement | undefined;
+      if (!button) return "no_button";
+      return button.disabled ? "disabled" : "enabled";
+    }, style);
+    if (state === "enabled") break;
+    await page.waitForTimeout(1000);
+  }
+
+  // Click Create so Suno runs hCaptcha and fires the generate request.
+  await evalSafe(() => {
+    const button = Array.from(document.querySelectorAll("button")).find((b) =>
+      /create song/i.test(b.getAttribute("aria-label") ?? "")
+    ) as HTMLButtonElement | undefined;
+    if (button && !button.disabled) button.click();
+    return "clicked";
+  });
 }
 
 function createCaptureWaiter(timeoutMs: number, tokenProviderFallback: number | undefined): {
@@ -306,6 +337,12 @@ function firstString(record: Record<string, unknown>, keys: string[]): string | 
 }
 
 async function loadPlaywright(): Promise<PlaywrightModule> {
+  // rebrowser's addBinding runtime-fix mode keeps page.evaluate working while
+  // still suppressing the CDP Runtime.enable automation leak. Without it,
+  // evaluate/route calls hang against Suno's app.
+  if (!process.env.REBROWSER_PATCHES_RUNTIME_FIX_MODE) {
+    process.env.REBROWSER_PATCHES_RUNTIME_FIX_MODE = "addBinding";
+  }
   const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<PlaywrightModule>;
   // Prefer rebrowser-playwright: it patches the CDP `Runtime.enable` leak that
   // Suno's invisible hCaptcha uses to flag automation. Stock playwright is
