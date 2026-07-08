@@ -4,25 +4,20 @@ Command-line Suno helper for creating songs and retrieving finished audio.
 
 ## Quick Start
 
-Install the CLI:
+**1. Install the CLI and its browser.** The browser is used once per create to mint a Suno captcha token through your own logged-in session.
 
 ```bash
 npm install -g @usedhonda/suno-cli
+npx playwright install chromium
 ```
 
-Or run it without a global install:
-
-```bash
-npx --yes @usedhonda/suno-cli --help
-```
-
-Log in once:
+**2. Log in once.** A browser window opens — sign in to Suno normally.
 
 ```bash
 suno-cli login
 ```
 
-Then create a song:
+**3. Create a song.**
 
 ```bash
 suno-cli create --live \
@@ -31,7 +26,11 @@ suno-cli create --live \
   --lyrics "rain on the window"
 ```
 
-The command prints JSON with Suno clip ids and `https://suno.com/song/<clip-id>` URLs. A successful live create can spend Suno credits.
+A browser window opens briefly to mint the captcha through your logged-in Suno session. **If Suno shows a puzzle, solve it once** (exactly like you would on suno.com) — after the first solve, later creates usually pass with no puzzle. Nothing is bypassed; you solve your own captcha.
+
+The command prints JSON with Suno clip ids and `https://suno.com/song/<clip-id>` URLs. Minting the captcha spends **no** credits; a successful create does.
+
+Want to check captcha works without spending credits? See [How Captcha Works](#how-captcha-works).
 
 ## Retrieve Results
 
@@ -172,18 +171,36 @@ suno-cli create --live \
 
 `SUNO_CREATE_SESSION_TOKEN` and `SUNO_USER_TIER` are also read from the environment. If omitted, the metadata keys are not sent.
 
-## Captcha Troubleshooting
+## How Captcha Works
 
-The normal path is:
+Suno requires a captcha token to create a song. The CLI mints one for you — you do **not** paste tokens or install a captcha-solving service.
+
+On `create --live`, the CLI opens a browser using your `suno-cli login` session, fills the create form, and lets Suno run its own hCaptcha:
+
+- **Most of the time it passes automatically** (invisible) and you see nothing.
+- **If Suno shows a puzzle, solve it in the window** — you are solving your own captcha in a real browser, exactly as on suno.com. After the first solve, the trusted session usually passes later creates without a puzzle.
+
+Minting never submits a create, so it costs no credits.
+
+### Verify captcha for free
+
+Check that minting works without spending any credits (mints the token, then stops — no create is submitted):
 
 ```bash
-suno-cli login
-suno-cli create --live --title "..." --style "..."
+suno-cli create --mint-check --title "test" --style "lo-fi piano"
 ```
 
-In trusted sessions observed on 2026-07-06, Suno accepted live create without a captcha token. If Suno requires captcha for your account, the CLI returns JSON with status `blocked_captcha` and exit code `31`.
+`"status": "captcha_mint_ok"` means captcha is working end-to-end.
 
-Manual captcha token supply remains an advanced debugging escape hatch:
+### Requirements for the browser mint
+
+- `npx playwright install chromium` must have been run once (installs the browser).
+- You must be logged in (`suno-cli login`).
+- The mint uses a visible browser window, so run it on a machine with a display.
+
+### Advanced: supply your own token
+
+Skip the browser entirely by passing a fresh token from a logged-in Suno tab:
 
 ```bash
 suno-cli create --live \
@@ -193,7 +210,7 @@ suno-cli create --live \
   --token-provider <integer>
 ```
 
-Captcha tokens are short-lived and may be single-use. Do not log them, paste them into chat, or commit them.
+Captcha tokens are short-lived and may be single-use. Do not log them, paste them into chat, or commit them. If Suno blocks the create, the CLI returns status `blocked_captcha` and exit code `31`.
 
 ## Exit Codes
 
