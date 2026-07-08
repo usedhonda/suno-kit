@@ -4,16 +4,20 @@ import path from "node:path";
 import test from "node:test";
 import { cliMain } from "../src/cli.js";
 
-test("README keeps captcha details out of the quick-start path", async () => {
+test("README documents install, login, create, and a dedicated captcha section", async () => {
+  // Captcha minting is now part of every live create (a browser opens), so the
+  // Quick Start mentions it briefly and a dedicated "How Captcha Works" section
+  // carries the full detail after it.
   const readme = await fs.readFile(path.join(process.cwd(), "README.md"), "utf8");
   const quickStart = readme.indexOf("## Quick Start");
-  const captchaTroubleshooting = readme.indexOf("## Captcha Troubleshooting");
+  const captchaSection = readme.indexOf("## How Captcha Works");
   assert(quickStart >= 0);
-  assert(captchaTroubleshooting > quickStart);
-  assert.equal(readme.slice(0, captchaTroubleshooting).toLowerCase().includes("captcha"), false);
+  assert(captchaSection > quickStart);
   assert(readme.includes("npm install -g @usedhonda/suno-cli"));
+  assert(readme.includes("npx playwright install chromium"));
   assert(readme.includes("suno-cli login"));
   assert(readme.includes("suno-cli create --live"));
+  assert(readme.includes("create --mint-check"));
 });
 
 test("help shows the basic create path before advanced captcha options", async () => {

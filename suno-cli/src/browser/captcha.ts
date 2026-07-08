@@ -110,6 +110,45 @@ export async function launchPersistentBrowser(options: BrowserLaunchOptions): Pr
   });
 }
 
+// Machine-readable progress for consumers (e.g. an autopilot that must prompt a
+// human to solve a challenge on a headless gateway). One JSON object per line on
+// stderr; stdout keeps carrying only the final result JSON, so the contract is
+// unchanged for callers that read stdout.
+function emitProgress(event: string, extra?: Record<string, unknown>): void {
+  try {
+    process.stderr.write(`${JSON.stringify({ event, ...extra })}\n`);
+  } catch {
+    // best-effort; never break the mint on a progress write error
+  }
+}
+
+// Poll for a visible hCaptcha challenge and announce it once so a headless
+// consumer can notify a human to solve it. Returns a stop function.
+function startChallengeDetector(page: Page, timeoutMs: number): () => void {
+  let stopped = false;
+  let announced = false;
+  void (async () => {
+    while (!stopped) {
+      const visible = await page
+        .evaluate(() =>
+          Array.from(document.querySelectorAll("iframe")).some(
+            (frame) => /hcaptcha/i.test(frame.src || "") && frame.getBoundingClientRect().width > 100
+          )
+        )
+        .catch(() => false);
+      if (visible && !announced) {
+        announced = true;
+        emitProgress("challenge_detected");
+        emitProgress("awaiting_human_solve", { timeoutMs });
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  })();
+  return () => {
+    stopped = true;
+  };
+}
+
 export async function mintBrowserCaptcha(
   input: BrowserCaptchaMintInput,
   options: BrowserCaptchaMintOptions
@@ -118,6 +157,7 @@ export async function mintBrowserCaptcha(
   const tokenProviderFallback = safeInteger(input.tokenProvider);
   let context: BrowserContext | undefined;
   try {
+    emitProgress("mint_started");
     context = await launchPersistentBrowser({
       profileDir: options.profileDir,
       headless: options.headless ?? true
@@ -150,7 +190,19 @@ export async function mintBrowserCaptcha(
     // hCaptcha and fire the create request, which the route hook aborts (no
     // credits spent) while the init-script capture reads token + token_provider.
     await triggerGenerateFlow(page, input.style);
-    return await capture.promise;
+    const stopDetector = startChallengeDetector(page, timeoutMs);
+    try {
+      const result = await capture.promise;
+      emitProgress("solved");
+      return result;
+    } catch (waitError) {
+      if (waitError instanceof BrowserCaptchaMintError && waitError.status === "captcha_required") {
+        emitProgress("mint_timeout");
+      }
+      throw waitError;
+    } finally {
+      stopDetector();
+    }
   } catch (error) {
     if (error instanceof BrowserCaptchaMintError) throw error;
     const message = error instanceof Error ? error.message : String(error);
