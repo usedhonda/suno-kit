@@ -106,7 +106,12 @@ export async function launchPersistentBrowser(options: BrowserLaunchOptions): Pr
     headless: options.headless ?? true,
     viewport: options.viewport ?? { width: 1280, height: 900 },
     // Force English UI so the form/button selectors are deterministic.
-    locale: "en-US"
+    locale: "en-US",
+    // Chrome auto-adds --enable-automation, which flags the session to
+    // hCaptcha's risk scoring. Suppress it (artist-runtime diff review,
+    // 2026-07-09): reported by the peer suno-cli consumer as the delta vs.
+    // the prior browser-worker driver that saw captcha far less often.
+    ignoreDefaultArgs: ["--enable-automation"]
   });
 }
 
