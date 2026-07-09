@@ -54,14 +54,6 @@ interface PlaywrightModule {
   };
 }
 
-interface PlaywrightExtraModule {
-  addExtra: (launcher: PlaywrightModule["chromium"]) => PlaywrightModule["chromium"] & {
-    use(plugin: unknown): PlaywrightModule["chromium"];
-  };
-}
-
-type StealthPluginFactory = () => unknown;
-
 export interface BrowserContext {
   newPage(): Promise<Page>;
   addCookies(cookies: CookieParam[]): Promise<void>;
@@ -408,7 +400,7 @@ async function loadPlaywright(): Promise<PlaywrightModule> {
   if (!process.env.REBROWSER_PATCHES_RUNTIME_FIX_MODE) {
     process.env.REBROWSER_PATCHES_RUNTIME_FIX_MODE = "addBinding";
   }
-  const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<unknown>;
+  const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<PlaywrightModule>;
   // Prefer rebrowser-playwright: it patches the CDP `Runtime.enable` leak that
   // Suno's invisible hCaptcha uses to flag automation. Stock playwright is
   // detected and yields an invalid token (HTTP 422). Fall back to stock only if
@@ -417,15 +409,7 @@ async function loadPlaywright(): Promise<PlaywrightModule> {
   let lastError: unknown;
   for (const specifier of candidates) {
     try {
-      const base = await dynamicImport(specifier) as PlaywrightModule;
-      const extra = await dynamicImport("playwright-extra") as PlaywrightExtraModule;
-      const stealthModule = await dynamicImport("puppeteer-extra-plugin-stealth") as {
-        default?: StealthPluginFactory;
-      } & StealthPluginFactory;
-      const stealthPlugin = (stealthModule.default ?? stealthModule)();
-      const chromium = extra.addExtra(base.chromium);
-      chromium.use(stealthPlugin);
-      return { chromium };
+      return await dynamicImport(specifier);
     } catch (error) {
       lastError = error;
     }
