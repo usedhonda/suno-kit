@@ -1,10 +1,4 @@
-# >>> project-bootstrap managed >>>
-.cc-status-bar.voice.json
-# <<< project-bootstrap managed <<<
-
 # Project-specific (non-public)
-CLAUDE.md
-AGENTS.md
 docs/
 .local
 
@@ -31,3 +25,10 @@ Thumbs.db
 *.log
 .env
 .env.*
+
+# >>> project-bootstrap local-only >>>
+CLAUDE.local.md
+.codex/config.toml
+.local/
+.cc-status-bar.voice.json
+# <<< project-bootstrap local-only <<<
