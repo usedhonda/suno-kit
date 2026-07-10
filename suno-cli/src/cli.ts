@@ -23,6 +23,7 @@ interface ParsedArgs {
   jwt?: string | undefined;
   jwtPaste?: string | undefined;
   cookiePaste?: string | undefined;
+  cdpEndpoint?: string | undefined;
   outDir?: string | undefined;
   pollMs?: number | undefined;
   timeoutMs?: number | undefined;
@@ -154,11 +155,16 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   // CDP automation leak; the mint aborts the real generate request so no credits
   // are spent while capturing token + token_provider.
   if (createOptions.live && !args.captchaToken) {
-    const { createBrowserCaptchaMinter } = await import("./browser/captcha.js");
+    const { createBrowserCaptchaMinter, normalizeLoopbackCdpEndpoint } = await import("./browser/captcha.js");
+    const configuredCdpEndpoint = args.cdpEndpoint ?? process.env.SUNO_KIT_CDP_ENDPOINT;
+    const cdpEndpoint = configuredCdpEndpoint
+      ? normalizeLoopbackCdpEndpoint(configuredCdpEndpoint)
+      : undefined;
     Object.assign(createOptions, {
       captchaMinter: createBrowserCaptchaMinter({
         profileDir: paths.browserProfileDir,
-        headless: false
+        headless: false,
+        ...(cdpEndpoint ? { cdpEndpoint } : {})
       })
     });
   }
@@ -212,6 +218,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       index += 1;
     } else if (arg === "--cookie-paste") {
       result.cookiePaste = argv[index + 1] ?? "";
+      index += 1;
+    } else if (arg === "--cdp-endpoint") {
+      result.cdpEndpoint = parseNonEmptyStringFlag("--cdp-endpoint", argv[index + 1]);
       index += 1;
     } else if (arg === "--out") {
       result.outDir = argv[index + 1];
@@ -319,7 +328,7 @@ function usage(): void {
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",
       "advanced create: [--exclude <text>] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]",
-      "advanced auth/live: [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--captcha-token <token> --token-provider <integer>]"
+      "advanced auth/live: [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--captcha-token <token> --token-provider <integer>] [--cdp-endpoint <loopback-url>]"
     ]
   });
 }

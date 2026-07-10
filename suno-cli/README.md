@@ -198,6 +198,26 @@ suno-cli create --mint-check --title "test" --style "lo-fi piano"
 - You must be logged in (`suno-cli login`).
 - The mint uses a visible browser window, so run it on a machine with a display.
 
+### Advanced: attach to an existing Chromium session
+
+The default remains the dedicated `suno-cli` browser profile. Operators may
+explicitly attach to an already visible, logged-in Chromium session that was
+started with a loopback CDP port:
+
+```bash
+suno-cli create --mint-check \
+  --title "test" \
+  --style "lo-fi piano" \
+  --cdp-endpoint http://127.0.0.1:9222
+```
+
+`SUNO_KIT_CDP_ENDPOINT=http://127.0.0.1:9222` provides the same opt-in for
+managed runtimes. Only loopback HTTP origins are accepted. When explicitly
+configured, the CLI reuses an existing Suno tab or opens one in that browser,
+does not close the attached browser, and fails without falling back to the
+dedicated profile if attachment fails. The generate request remains intercepted
+and aborted during `--mint-check`, so the check does not submit or spend credits.
+
 ### Advanced: supply your own token
 
 Skip the browser entirely by passing a fresh token from a logged-in Suno tab:

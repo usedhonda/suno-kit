@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -28,6 +29,28 @@ test("help shows the basic create path before advanced captcha options", async (
   assert(basicCreateIndex >= 0);
   assert(advancedIndex > basicCreateIndex);
   assert.equal(usage.slice(0, advancedIndex).join("\n").includes("--captcha-token"), false);
+  assert(usage[advancedIndex]?.includes("--cdp-endpoint <loopback-url>"));
+});
+
+test("create rejects non-loopback CDP endpoints before browser attach", async () => {
+  const args = [
+    path.join(process.cwd(), "dist", "src", "cli.js"),
+    "create",
+    "--mint-check",
+    "--title", "test",
+    "--style", "lo-fi piano",
+    "--cdp-endpoint", "http://192.168.1.20:9222"
+  ];
+  const result = spawnSync(process.execPath, args, { encoding: "utf8" });
+  assert.equal(result.status, 2);
+  assert.match(JSON.parse(result.stdout).error, /loopback HTTP origin/);
+
+  const envResult = spawnSync(process.execPath, args.slice(0, -2), {
+    encoding: "utf8",
+    env: { ...process.env, SUNO_KIT_CDP_ENDPOINT: "http://example.com:9222" }
+  });
+  assert.equal(envResult.status, 2);
+  assert.match(JSON.parse(envResult.stdout).error, /loopback HTTP origin/);
 });
 
 async function captureStdout(fn: () => Promise<number>): Promise<{ code: number; json: any; text: string }> {

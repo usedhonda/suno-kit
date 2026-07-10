@@ -5,6 +5,7 @@ export interface BrowserCaptchaMintOptions {
   headless?: boolean;
   timeoutMs?: number;
   createUrl?: string;
+  cdpEndpoint?: string;
   // Raw `document.cookie` string from a logged-in Suno session. When present it is
   // injected into the mint profile so suno.com/create opens logged-in and renders
   // hCaptcha instead of redirecting to the login page.
@@ -51,11 +52,18 @@ export interface BrowserCaptchaMinter {
 interface PlaywrightModule {
   chromium: {
     launchPersistentContext(userDataDir: string, options: Record<string, unknown>): Promise<BrowserContext>;
+    connectOverCDP(endpoint: string): Promise<Browser>;
   };
+}
+
+interface Browser {
+  contexts(): BrowserContext[];
+  close(): Promise<void>;
 }
 
 export interface BrowserContext {
   newPage(): Promise<Page>;
+  pages(): Page[];
   addCookies(cookies: CookieParam[]): Promise<void>;
   close(): Promise<void>;
 }
@@ -67,6 +75,8 @@ export interface BrowserLaunchOptions {
 }
 
 interface Page {
+  url(): string;
+  close(): Promise<void>;
   route(pattern: string, handler: (route: Route, request: BrowserRequest) => Promise<void> | void): Promise<void>;
   exposeBinding(name: string, callback: (source: unknown, payload: unknown) => void): Promise<void>;
   addInitScript(script: string): Promise<void>;
@@ -74,6 +84,13 @@ interface Page {
   evaluate<T>(callback: () => T | Promise<T>): Promise<T>;
   evaluate<T, A>(callback: (arg: A) => T | Promise<T>, arg: A): Promise<T>;
   waitForTimeout(ms: number): Promise<void>;
+}
+
+export interface BrowserMintSession {
+  context: BrowserContext;
+  page: Page;
+  mode: "profile" | "cdp";
+  close(): Promise<void>;
 }
 
 interface Route {
@@ -99,10 +116,13 @@ export function createBrowserCaptchaMinter(options: BrowserCaptchaMintOptions): 
   };
 }
 
-export async function launchPersistentBrowser(options: BrowserLaunchOptions): Promise<BrowserContext> {
-  const playwright = await loadPlaywright();
+export async function launchPersistentBrowser(
+  options: BrowserLaunchOptions,
+  playwright?: PlaywrightModule
+): Promise<BrowserContext> {
+  const runtime = playwright ?? await loadPlaywright();
   await fs.mkdir(options.profileDir, { recursive: true });
-  return playwright.chromium.launchPersistentContext(options.profileDir, {
+  return runtime.chromium.launchPersistentContext(options.profileDir, {
     headless: options.headless ?? true,
     viewport: options.viewport ?? { width: 1280, height: 900 },
     // Force English UI so the form/button selectors are deterministic.
@@ -113,6 +133,97 @@ export async function launchPersistentBrowser(options: BrowserLaunchOptions): Pr
     // the prior browser-worker driver that saw captcha far less often.
     ignoreDefaultArgs: ["--enable-automation"]
   });
+}
+
+export function normalizeLoopbackCdpEndpoint(endpoint: string): string {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    throw new Error("Usage: --cdp-endpoint must be a valid loopback HTTP URL.");
+  }
+  const hostname = url.hostname.toLowerCase();
+  const isLoopback = hostname === "localhost" || hostname === "[::1]" || /^127(?:\.\d{1,3}){3}$/.test(hostname);
+  if (
+    !isLoopback ||
+    (url.protocol !== "http:" && url.protocol !== "https:") ||
+    url.username.length > 0 ||
+    url.password.length > 0 ||
+    (url.pathname !== "/" && url.pathname !== "") ||
+    url.search.length > 0 ||
+    url.hash.length > 0
+  ) {
+    throw new Error("Usage: --cdp-endpoint must be a loopback HTTP origin such as http://127.0.0.1:9222.");
+  }
+  return url.origin;
+}
+
+export async function openBrowserMintSession(
+  options: BrowserCaptchaMintOptions,
+  playwright?: PlaywrightModule
+): Promise<BrowserMintSession> {
+  const runtime = playwright ?? await loadPlaywright();
+  if (options.cdpEndpoint) {
+    const endpoint = normalizeLoopbackCdpEndpoint(options.cdpEndpoint);
+    let browser: Browser;
+    try {
+      browser = await runtime.chromium.connectOverCDP(endpoint);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BrowserCaptchaMintError(
+        "captcha_mint_failed",
+        `CDP attach failed for ${endpoint}: ${message}`,
+        { next_command: `curl -fsS ${endpoint}/json/version` }
+      );
+    }
+    const context = browser.contexts()[0];
+    if (!context) {
+      await browser.close().catch(() => undefined);
+      throw new BrowserCaptchaMintError(
+        "captcha_mint_failed",
+        `CDP attach at ${endpoint} has no browser context.`,
+        { next_command: `curl -fsS ${endpoint}/json/version` }
+      );
+    }
+    try {
+      const existingPage = context.pages().find((page) => {
+        try {
+          const hostname = new URL(page.url()).hostname;
+          return hostname === "suno.com" || hostname.endsWith(".suno.com");
+        } catch {
+          return false;
+        }
+      });
+      const page = existingPage ?? await context.newPage();
+      return {
+        context,
+        page,
+        mode: "cdp",
+        close: async () => {
+          try {
+            if (!existingPage) await page.close().catch(() => undefined);
+          } finally {
+            await browser.close().catch(() => undefined);
+          }
+        }
+      };
+    } catch (error) {
+      await browser.close().catch(() => undefined);
+      throw error;
+    }
+  }
+
+  const context = await launchPersistentBrowser({
+    profileDir: options.profileDir,
+    headless: options.headless ?? true
+  }, runtime);
+  const page = await context.newPage();
+  return {
+    context,
+    page,
+    mode: "profile",
+    close: () => context.close()
+  };
 }
 
 // Machine-readable progress for consumers (e.g. an autopilot that must prompt a
@@ -160,30 +271,24 @@ export async function mintBrowserCaptcha(
 ): Promise<BrowserCaptchaMintResult> {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const tokenProviderFallback = safeInteger(input.tokenProvider);
-  let context: BrowserContext | undefined;
+  let session: BrowserMintSession | undefined;
   try {
     emitProgress("mint_started");
-    context = await launchPersistentBrowser({
-      profileDir: options.profileDir,
-      headless: options.headless ?? true
-    });
+    session = await openBrowserMintSession(options);
+    const { context, page } = session;
     if (options.cookieHeader) {
       const cookies = parseCookieHeader(options.cookieHeader);
       if (cookies.length > 0) {
         await context.addCookies(cookies);
       }
     }
-    const page = await context.newPage();
     const capture = createCaptureWaiter(timeoutMs, tokenProviderFallback);
     await page.exposeBinding("__sunoCliCaptureCaptcha", (_source, payload) => {
       capture.accept(payload);
     });
     // Match any generate sub-path (not just v2-web) so a paid create can never
     // slip through un-aborted while we only wanted to mint the token from it.
-    await page.route("**/api/generate/**", async (route, request) => {
-      capture.accept(parseMaybeJson(request.postData()));
-      await route.abort("blockedbyclient");
-    });
+    await installGenerateAbortRoute(page, capture.accept);
     await page.addInitScript(CAPTURE_INIT_SCRIPT);
     await page.goto(options.createUrl ?? DEFAULT_CREATE_URL, {
       waitUntil: "domcontentloaded",
@@ -224,8 +329,18 @@ export async function mintBrowserCaptcha(
       INSTALL_RECOVERY
     );
   } finally {
-    await context?.close().catch(() => undefined);
+    await session?.close().catch(() => undefined);
   }
+}
+
+export async function installGenerateAbortRoute(page: Page, accept: (payload: unknown) => void): Promise<void> {
+  await page.route("**/api/generate/**", async (route, request) => {
+    try {
+      accept(parseMaybeJson(request.postData()));
+    } finally {
+      await route.abort("blockedbyclient");
+    }
+  });
 }
 
 // Parse a raw `document.cookie` string into Playwright cookie params, expanded
