@@ -167,7 +167,7 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
 
 async function withLiveCaptcha(options: CreateCommandOptions): Promise<CreateCommandOptions> {
   if (!options.live || options.token) return options;
-  if (!options.captchaMinter) {
+  if (!options.mintCheck || !options.captchaMinter) {
     return {
       ...options,
       token: null,

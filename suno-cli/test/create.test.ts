@@ -361,9 +361,6 @@ test("create live-fire path is blocked without manual gate", async () => {
   assert.equal(output.json.status, "manual_gate_required");
 });
 
-// When --captcha-token is supplied, the browser auto-mint is skipped and the
-// provided token is submitted verbatim. (Omitting the token now triggers the
-// browser captcha mint, which is exercised live rather than in this unit suite.)
 test("create --live submits the supplied captcha token", async () => {
   const tempDir = await fsTempDir();
   const { restore, getGenerateBody } = mockLiveFetch(200, {
@@ -392,9 +389,58 @@ test("create --live submits the supplied captcha token", async () => {
   }
 });
 
-test("create --live injects mocked browser captcha mint before submit", async () => {
+test("create --live without a token submits null captcha fields without browser mint", async () => {
+  const tempDir = await fsTempDir();
+  const { restore, getGenerateBody } = mockLiveFetch(200, {
+    clips: [{ id: LIVE_CLIP_ID }]
+  });
+  try {
+    const output = await captureStdout(() => cliMain([
+      "create",
+      "--live",
+      "--data-dir", tempDir,
+      "--title", "verify probe",
+      "--style", "lo-fi piano",
+      "--run-id", "run_live_null_captcha",
+      "--min-minutes-between-creates", "0"
+    ]));
+    const submittedBody = getGenerateBody();
+    assert.equal(output.code, 0);
+    assert.equal(output.json.status, "submitted");
+    assert.equal(submittedBody.token, null);
+    assert.equal(submittedBody.token_provider, null);
+  } finally {
+    restore();
+  }
+});
+
+test("create --live captcha rejection fails closed without browser mint fallback", async () => {
+  const tempDir = await fsTempDir();
+  const { restore, getGenerateBody } = mockLiveFetch(422, { error: "captcha_required" });
+  try {
+    const output = await captureStdout(() => cliMain([
+      "create",
+      "--live",
+      "--data-dir", tempDir,
+      "--title", "verify probe",
+      "--style", "lo-fi piano",
+      "--run-id", "run_live_captcha_rejected",
+      "--min-minutes-between-creates", "0"
+    ]));
+    const submittedBody = getGenerateBody();
+    assert.equal(output.code, 31);
+    assert.equal(output.json.status, "blocked_captcha");
+    assert.equal(submittedBody.token, null);
+    assert.equal(submittedBody.token_provider, null);
+  } finally {
+    restore();
+  }
+});
+
+test("createCommand never invokes a supplied browser minter outside mint-check", async () => {
   const tempDir = await fsTempDir();
   const ledger = new LedgerStore(path.join(tempDir, "runs.json"));
+  let mintCalls = 0;
   let submittedBody: any;
   const output = await captureStdout(() => createCommand({
     dryRun: false,
@@ -403,12 +449,10 @@ test("create --live injects mocked browser captcha mint before submit", async ()
     style: "lo-fi piano",
     ledger,
     policy: { maxGenerationsPerDay: 4, minMinutesBetweenCreates: 0 },
-    runId: "run_minted",
     captchaMinter: {
-      mint: async (input) => {
-        assert.equal(input.title, "verify probe");
-        assert.equal(input.style, "lo-fi piano");
-        return { token: "minted-captcha-secret", tokenProvider: 1 };
+      mint: async () => {
+        mintCalls += 1;
+        return { token: "must-not-be-used", tokenProvider: 1 };
       }
     },
     submitter: {
@@ -423,9 +467,41 @@ test("create --live injects mocked browser captcha mint before submit", async ()
     }
   }));
   assert.equal(output.code, 0);
-  assert.equal(output.json.status, "submitted");
-  assert.equal(submittedBody.token, "minted-captcha-secret");
-  assert.equal(submittedBody.token_provider, 1);
+  assert.equal(mintCalls, 0);
+  assert.equal(submittedBody.token, null);
+  assert.equal(submittedBody.token_provider, null);
+});
+
+test("mint-check invokes the browser diagnostic and never submits", async () => {
+  const tempDir = await fsTempDir();
+  const ledger = new LedgerStore(path.join(tempDir, "runs.json"));
+  let mintCalls = 0;
+  let submitCalls = 0;
+  const output = await captureStdout(() => createCommand({
+    dryRun: false,
+    live: true,
+    mintCheck: true,
+    title: "verify probe",
+    style: "lo-fi piano",
+    ledger,
+    policy: { maxGenerationsPerDay: 4, minMinutesBetweenCreates: 0 },
+    captchaMinter: {
+      mint: async () => {
+        mintCalls += 1;
+        return { token: "minted-captcha-secret", tokenProvider: 1 };
+      }
+    },
+    submitter: {
+      submit: async () => {
+        submitCalls += 1;
+        throw new Error("mint-check must not submit");
+      }
+    }
+  }));
+  assert.equal(output.code, 0);
+  assert.equal(output.json.status, "captcha_mint_ok");
+  assert.equal(mintCalls, 1);
+  assert.equal(submitCalls, 0);
   assert.equal(output.text.includes("minted-captcha-secret"), false);
 });
 

@@ -149,12 +149,9 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   if (userTier) Object.assign(createOptions, { userTier });
   if (args.runId) Object.assign(createOptions, { runId: args.runId });
   if (args.mintCheck) Object.assign(createOptions, { mintCheck: true });
-  // Auto-mint captcha for live create. When no --captcha-token is supplied we drive
-  // the logged-in browser profile from `suno-cli login` so Suno's own invisible
-  // hCaptcha mints a token. rebrowser-playwright (loaded in captcha.ts) avoids the
-  // CDP automation leak; the mint aborts the real generate request so no credits
-  // are spent while capturing token + token_provider.
-  if (createOptions.live && !args.captchaToken) {
+  // Browser minting is an explicit no-submit diagnostic only. Normal live create
+  // keeps null captcha fields and lets the API report blocked_captcha if required.
+  if (args.mintCheck) {
     const { createBrowserCaptchaMinter, normalizeLoopbackCdpEndpoint } = await import("./browser/captcha.js");
     const configuredCdpEndpoint = args.cdpEndpoint ?? process.env.SUNO_KIT_CDP_ENDPOINT;
     const cdpEndpoint = configuredCdpEndpoint
