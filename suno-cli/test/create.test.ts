@@ -437,6 +437,29 @@ test("create --live captcha rejection fails closed without browser mint fallback
   }
 });
 
+test("create --live token_validation_failed 422 classifies as blocked_captcha not schema_drift", async () => {
+  const tempDir = await fsTempDir();
+  const { restore } = mockLiveFetch(422, {
+    detail: "token_validation_failed",
+    message: "Please verify your request."
+  });
+  try {
+    const output = await captureStdout(() => cliMain([
+      "create",
+      "--live",
+      "--data-dir", tempDir,
+      "--title", "verify probe",
+      "--style", "lo-fi piano",
+      "--run-id", "run_live_token_validation_failed",
+      "--min-minutes-between-creates", "0"
+    ]));
+    assert.equal(output.code, 31);
+    assert.equal(output.json.status, "blocked_captcha");
+  } finally {
+    restore();
+  }
+});
+
 test("createCommand never invokes a supplied browser minter outside mint-check", async () => {
   const tempDir = await fsTempDir();
   const ledger = new LedgerStore(path.join(tempDir, "runs.json"));

@@ -92,7 +92,7 @@ async function toGenerateHttpError(response: Response): Promise<GenerateHttpErro
 }
 
 function isCaptchaRequired(text: string): boolean {
-  return /captcha|hcaptcha|turnstile|challenge/i.test(text);
+  return /captcha|hcaptcha|turnstile|challenge|token_validation_failed|verify your request/i.test(text);
 }
 
 function extractClipIds(payload: unknown): string[] {
