@@ -34,10 +34,13 @@ fi
 # Existence-independent: assert the .gitignore rule exists AND nothing is tracked.
 # (git check-ignore on a path only matches a dir-pattern when the dir exists on disk;
 #  grepping .gitignore is robust whether or not the ignored dir is present.)
-for p in "docs/" "CLAUDE.md" "AGENTS.md" ".claude/" ".local" ".codex/"; do
+# CLAUDE.md and AGENTS.md are deliberately outside this boundary: 1d52155 published
+# them as the tracked shared-instruction layer (public-safe by contract). Private
+# instructions live in CLAUDE.local.md and .codex/config.toml, which stay ignored.
+for p in "docs/" ".claude/" ".local" ".codex/"; do
   grep -qF -- "$p" .gitignore || fail "C3 .gitignore missing boundary entry: $p"
 done
-if git ls-files | grep -qE '^(docs/|CLAUDE\.md|AGENTS\.md|\.claude/|\.local|\.codex/)'; then
+if git ls-files | grep -qE '^(docs/|\.claude/|\.local|\.codex/)'; then
   fail "C3 a boundary path is TRACKED in git (non-public content leaked)"
 fi
 
