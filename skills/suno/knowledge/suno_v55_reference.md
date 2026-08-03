@@ -103,6 +103,12 @@ Community-sourced, not confirmed official; effect is context-dependent — A/B t
   reserve parentheses for non-critical color. Confidence: medium (two independent domains; one quantifies
   it as ~90/70/50% compliance — treat the figures as illustrative). Source: acetaggen.com (2026-04),
   hookgenius.app (2026-05).
+- Inline chord-name brackets in the lyric box: writing chord symbols as their own bracketed tokens
+  (e.g. `[Am7] [G] [Cmaj7]` or `[Bm] [A] [G]`) on a separate line above/between the sung lines is
+  reported to raise the likelihood that the generated harmony follows that chord progression. Keep the
+  chord tokens on their own line, separated from lyric text, so they are not vocalized. Confidence:
+  medium (two independent domains; one reports partial hands-on verification). Source: zenn.dev,
+  note.com, 2026-08.
 
 ---
 
