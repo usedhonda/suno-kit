@@ -49,6 +49,15 @@ feature_matrix:
     - none in the current prompt/CLI ownership boundary
   decision: out of scope. Mobile voice capture and image/video cover-art editing
     are neither prompt-generation nor current CLI retrieval behavior.
+- feature: iMessage, mobile share inputs, and soccer anthem flows
+  status: official
+  date: 2026-06-04 to 2026-07-15
+  evidence:
+    - https://suno.com/release-notes
+  affected_surfaces:
+    - none in the current prompt/CLI ownership boundary
+  decision: out of scope. These are iOS/Android entry points and guided mobile
+    experiences; they do not change the Web prompt contract or supported CLI API.
 - feature: new model generation announcement
   status: community-only
   date: 2026-08-12
@@ -72,7 +81,7 @@ iteration_1:
 - Official release notes were read on 2026-08-13 through the current top entries:
   Voices mobile (2026-08-07), Cover Art improvements (2026-07-31), Duration Slider
   (2026-07-20), Lyrics improvements (2026-07-09), and Stem Separation improvements
-  (2026-06-11).
+  (2026-06-11), plus iMessage/mobile-share/mobile-anthem entry points.
 - Community corroboration for Duration was refreshed on 2026-08-13. It supports a
   reliability caveat only; it does not provide a Tier W CLI request contract.
 - Verification: `git diff --check` passed and `bash scripts/check-consistency.sh`
