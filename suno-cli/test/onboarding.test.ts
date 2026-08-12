@@ -31,6 +31,15 @@ test("help shows the basic create path before advanced captcha options", async (
   assert(usage[advancedIndex]?.includes("--cdp-endpoint <loopback-url>"));
 });
 
+test("root README describes the normal live captcha contract", async () => {
+  const rootReadme = await fs.readFile(path.join(process.cwd(), "..", "README.md"), "utf8");
+
+  assert.match(rootReadme, /通常の `create --live` は null CAPTCHA fields で送信/);
+  assert.match(rootReadme, /`blocked_captcha`（exit 31）で停止/);
+  assert.match(rootReadme, /明示 token\/provider は advanced fallback/);
+  assert.doesNotMatch(rootReadme, /--captcha-token <token> --token-provider <integer>` が必須/);
+});
+
 test("create rejects non-loopback CDP endpoints before browser attach", async () => {
   const args = [
     path.join(process.cwd(), "dist", "src", "cli.js"),

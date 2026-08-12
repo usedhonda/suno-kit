@@ -66,7 +66,7 @@ knowledge: 何を作るかを決める
 
 現状:
 - **回収層（出荷済み・Phase1）** — `status` / `urls` / `download`。Clerk JWT HTTP で回収、JSON output + 安定 exit code の非対話 IF。詳細は [`suno-cli/README.md`](suno-cli/README.md)
-- **create（dry-run + `--live` gated submit）** — `create --dry-run` で R6 body（Style / Lyrics / Exclude / model / vocal gender / **weirdness・style influence・audio influence** slider、persona、cover 等）を構築・検証できる。実課金 submit は `create --live --captcha-token <token> --token-provider <integer>` が必須で、owner GO のある検収時だけ実行する
+- **create（dry-run + `--live` gated submit）** — `create --dry-run` で R6 body（Style / Lyrics / Exclude / model / vocal gender / **weirdness・style influence・audio influence** slider、persona、cover 等）を構築・検証できる。通常の `create --live` は null CAPTCHA fields で送信し、Suno が CAPTCHA を要求した場合は `blocked_captcha`（exit 31）で停止する。明示 token/provider は advanced fallback であり、自動 browser retry はしない
 
 設計方針:
 - `transaction_uuid` で冪等 retry（課金保護）

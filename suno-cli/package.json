@@ -1,6 +1,6 @@
 {
   "name": "@usedhonda/suno-cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "Suno create and retrieval CLI.",
   "license": "MIT",
