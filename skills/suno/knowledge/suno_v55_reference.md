@@ -282,9 +282,13 @@ Community-sourced, not confirmed official; effect is context-dependent — A/B t
   - Style Influence around 35
 - Keep this lighter than a full specification dump. Overlong tag text still breaks.
 
-### Song Duration Control (length levers)
+### Song Duration Control (V5.5 slider + structural fallback)
 
-Suno has **no seconds field** — duration is an emergent property of structure, not a setting. Cross-project corpus testing (artist-runtime / used::honda, 2026-06) quantified what actually moves it.
+**V5.5 Web has a Duration Slider.** Suno officially added it on 2026-07-20 to pick song length in the Web Create form; the release is specifically marked for V5.5. Treat the selected length as a creative target, not a guaranteed rendered duration. Current community reports describe early lyric cutoffs and padded endings, especially when the selected length fights the song material. Confidence: high for availability/scope (official), medium for reliability caveats (community reports, 2026-07 to 2026-08).
+
+`suno-cli` does **not** currently expose `--duration`: this project has no verified current request-field name, type, or mode constraints for the slider. Do not invent a seconds/range field in the CLI body. Until that wire contract is captured and verified, use the Web control when available and the structural levers below as the CLI-compatible fallback.
+
+When the slider is unavailable or unsuitable, duration remains an emergent property of structure. Cross-project corpus testing (artist-runtime / used::honda, 2026-06) quantified what actually moves it.
 
 - **Lyric body length ≠ duration.** Body char count (excluding YAML META) correlates with final duration at only **r≈0.11** — effectively uncorrelated. "More lyrics = longer song" is false. Worse: very long bodies (5000-7000 chars) get **compressed/truncated** down to 40-76 seconds; a ~1300-char body reliably yields 2-2.5 minutes.
 - **What actually drives length:** section count + bar hints (`[Verse - 16 bars]`) + **physical chorus re-show** (write the chorus out ~3×, don't rely on the model to repeat) + pacing + BPM. See `song_structures.md` patterns A-H: 6-section patterns land "under 2 min", 9-section (3-verse) patterns run long.
@@ -293,7 +297,9 @@ Suno has **no seconds field** — duration is an emergent property of structure,
 - **Syllable contrast is also a length lever.** Varying syllable count between sections (Verse 8-10 → Chorus 5-7) sharpens Suno's section-boundary recognition (see `song_structures.md` energy-curve principle, `lyric_craft.md` §5), so all sections actually render instead of being merged/skipped — protecting length, not just singability.
 - **Extend is a weak length lever.** Build length in the first generation via structure. Extend drags tempo and pulls unresolved loops forward (see `Ending Control Workflow` above).
 
-Confidence: medium-high (r≈0.11 and the truncation thresholds are corpus-quantified; the Style-bloat mechanism is synthesized from `Bracket Theory` + `Lyrics-as-Control-Panel` and field-confirmed). Source: artist-runtime corpus (used::honda) + community Bracket Theory.
+Confidence: medium-high for the fallback levers (r≈0.11 and the truncation thresholds are corpus-quantified; the Style-bloat mechanism is synthesized from `Bracket Theory` + `Lyrics-as-Control-Panel` and field-confirmed). Source: artist-runtime corpus (used::honda) + community Bracket Theory.
+
+Sources: official release note https://suno.com/release-notes/duration-slider-on-web; community reliability reports https://www.reddit.com/r/SunoAI/comments/1v1ynhm/ and https://www.reddit.com/r/SunoAI/comments/1vkmvtq/.
 
 ### Studio Stem Duet Workflow
 - For "real" duets, do not force the first generation to sing both roles at once.
@@ -629,6 +635,7 @@ Critical for Japanese lyrics. Suno's voice synthesis requires hiragana.
 
 ## V5.5 Official Sources
 - https://suno.com/blog/v5-5
+- https://suno.com/release-notes/duration-slider-on-web
 - https://help.suno.com/en/articles/11362305
 - https://help.suno.com/en/articles/11362369 (Voices)
 - https://help.suno.com/en/articles/11362497 (Custom Models)
