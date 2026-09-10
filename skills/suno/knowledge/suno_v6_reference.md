@@ -102,12 +102,29 @@ next to `model_name: "chirp-hawk"`. The same map reproduces the already-known
 | v5.5 | `chirp-fenix` | previously known, re-confirmed |
 | v6 | `chirp-hawk` | `observed_v6` (two independent paths) |
 | v6-mini | `chirp-goose` | `observed_v6` (app model-tier map) |
-| **v6-wild** | **unknown** | **not observed — do not guess** |
+| **v6-wild** | **none of its own** | see below — **do not add an alias** |
 
-`v6-wild` is offered in the model picker, but it is not a tier in the app's model map and the
-string does not appear in any loaded front-end asset. That is evidence it is **not a distinct
-`mv` value** — more likely a flag or a server-driven option. Settling it needs one real
-generate request made with `v6-wild` selected.
+### Why `v6-wild` has no identifier of its own
+
+Tested 2026-09-10 by generating **two** songs with `v6-wild` genuinely selected in the picker
+(the selector read `v6-wild` immediately before each create). Both resulting clips came back as:
+
+```
+major_model_version: "v6"      model_name: "chirp-hawk"
+```
+
+— identical to a plain `v6` clip. Supporting evidence pointing the same way: `v6-wild` is not a
+tier in the app's model map, which lists only `... v5_5, v6_mini, v6`.
+
+The one contrary signal is that the string `chirp-hawk-wild` does exist in the client state
+attached to the `v6-wild` row in the picker. So the most likely shape is that "wild" travels as a
+**separate flag or a server-side variant**, and the stored model is normalised back to
+`chirp-hawk` — not that `chirp-hawk-wild` is what a create request carries.
+
+**Consequence for `suno-cli`:** do **not** add a `v6-wild` alias. There is no observed wire value
+to map it to, and the observable outcome of picking wild is a `chirp-hawk` clip. Sending
+`chirp-hawk-wild` as `mv` would be a guess. Whatever selects wild is not `mv` alone, and that
+parameter has not been identified.
 
 These are observations of a closed, server-side product, not a published contract. Re-verify
 after any Suno update.
