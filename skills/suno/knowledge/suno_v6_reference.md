@@ -233,6 +233,19 @@ Per-rule verdicts: see `v55_to_v6_migration.md`.
 
 ---
 
+## Community findings
+
+### Community-reported inline tags (unofficial — verify per song)
+
+Community-sourced, not confirmed official; effect is context-dependent — A/B test one at a time.
+All entries here are `community_experimental` until reproduced.
+
+*(Empty. V6 shipped 2026-09-09 and V6-specific community prompt science has not accumulated yet.
+The harvest loop appends here. V5.5-era techniques are not copied in — they live in
+`suno_v55_reference.md` and are ranked as `legacy_v55_candidate` in `v55_to_v6_migration.md`.)*
+
+---
+
 ## Known weak points
 
 `community_experimental` — independent first-day hands-on reporting, single reviewer, small sample.
