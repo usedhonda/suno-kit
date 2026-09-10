@@ -148,6 +148,10 @@ Community-sourced, not confirmed official; effect is context-dependent — A/B t
 - Safe operating range for all sliders: **15-85**
 - Red zone (0-14, 86-100) → unpredictable output, structure collapse
 - Default values are often the safest starting point
+- **Known deliberate exceptions** (these enter the red zone on purpose, with a specific goal):
+  - Convergence pass of the two-phase slider workflow — Weirdness 5-15 (see below)
+  - Whole-song Sampling / Cover preservation recipes — Weirdness 0, Style 100, Audio 100
+  - Outside these named recipes, stay inside 15-85
 
 ### V5.5 Combo Finding
 - Weirdness HIGH + Style Influence HIGH = better lyric tag compliance
@@ -243,7 +247,9 @@ Community-sourced, not confirmed official; effect is context-dependent — A/B t
 ### Slider Two-Phase Workflow
 - Treat sliders as a **two-pass system**:
   - **Exploration**: Style 50-60, Weirdness 10-20
-  - **Convergence**: Style 20-40, Weirdness 5-15
+  - **Convergence**: Style 20-40, Weirdness 5-15 — note this dips below the 15-85 safe range on
+    purpose, to stop the model from wandering once the genre is already right. It is a deliberate
+    exception to the Red Zone rule, not a contradiction of it.
 - Do not rush to Style 100 in the first pass. It often over-locks the output and increases genre drift or unstable vocals.
 - Use this when the broad genre is right but the song still needs several takes to "latch on."
 

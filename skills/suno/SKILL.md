@@ -558,7 +558,7 @@ else: print('✅ OK')
 
 ▼ 次は YAML + Lyrics を生成する。**ここで止まるな。スキップ禁止。**
 
-**4) YAML + Lyrics（歌詞ありの場合、5000文字以内）**
+**4) YAML + Lyrics（歌詞ありの場合、キット目標 4500 / Suno 上限 5000文字以内）**
 ```yaml
 # META (hints; do not sing)
 version: v5.5
@@ -585,9 +585,9 @@ YAML+Lyrics 全体をシェルで実カウントする:
 python3 -c "
 yaml_lyrics = '''<YAML+Lyrics全文>'''
 count = len(yaml_lyrics)
-print(f'YAML+Lyrics文字数: {count}')
-if count > 5000: print('⚠️ 超過！圧縮が必要')
-elif count > 4800: print('⚠️ 上限に近い')
+print(f'YAML+Lyrics文字数: {count} (キット目標 4500 / Suno 上限 5000)')
+if count > 5000: print('🚨 Suno 上限超過！必ず圧縮')
+elif count > 4500: print('⚠️ キット目標 4500 超過 — META を圧縮（歌詞は絶対に削らない）')
 else: print('✅ OK')
 "
 ```

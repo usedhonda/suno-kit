@@ -34,7 +34,7 @@ knowledge: 何を作るかを決める
 |---------|------|
 | **アーティスト** | 対話で深掘り → Markdownプロファイル保存。全曲がアーティストに紐づく |
 | **歌詞** | テーマから生成 or 持ち込み歌詞を保護。イテレーション（部分修正）対応。漢字版+ひらがな版の2ファイル出力 |
-| **Style/YAML** | URL参照 or テキスト指示 → Style + Exclude + YAML。1000文字チェック付き |
+| **Style/YAML** | URL参照 or テキスト指示 → Style + Exclude + YAML。文字数は機械カウントで検証（コアタグ 120 / Style 全体 400 / YAML+歌詞 4500） |
 | **Suno自動入力** | Tampermonkey連携。生成結果をクリップボード経由でSunoに一発入力 |
 | **マスタリング** | WAVスキャン → Suno特有のクセを判定 → Pedalboard（DAW品質）で補正 → -14 LUFS ノーマライズ |
 | **X用動画** | カバー画像+音声 → 5MB使い切り動画。ビットレート逆算+メタデータ埋め込み |
@@ -211,7 +211,17 @@ suno-kit/
 
 ## knowledge 更新時
 
-knowledge ファイルは `skills/suno/knowledge/` を直接編集する。スキルが自己完結しているため別途同期は不要。
+正本はこのリポジトリの `skills/suno/knowledge/` です。ここを編集します。
+
+ただし `/suno` スキルが実行時に読むのは **Setup でコピーした `~/.claude/skills/suno/` 側**です。
+リポジトリを編集しただけでは反映されないので、編集後に Setup と同じコピーをやり直してください。
+
+```bash
+cp -R skills/suno ~/.claude/skills/
+```
+
+（コピーの代わりに `ln -s "$PWD/skills/suno" ~/.claude/skills/suno` でシンボリックリンクにすれば、
+以後は編集が即反映されます。）
 
 ## 情報の立場
 

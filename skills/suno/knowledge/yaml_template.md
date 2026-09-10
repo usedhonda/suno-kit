@@ -62,7 +62,11 @@ notes:
 - Keep English as-is: love → love
 
 ### Section Matching Rule
-The `sections` in YAML and the lyrics sections MUST exactly match the input lyrics:
+
+The lyrics section tags MUST exactly match the input lyrics.
+(There is no `sections` array in YAML — it was removed, see above. This rule applies to the
+section headers inside the `=== LYRICS START/END ===` block only.)
+
 - Same section names
 - Same order
 - No additions, deletions, or reordering
@@ -114,8 +118,15 @@ Bridge: piano ghost drums only
 ```
 
 **注意**:
-- Performance Direction を含めると Style が 120 文字を超える。合計上限は Suno UI の Style フィールド上限（1000文字）に従う
-- コアタグ（120文字以内）+ Performance Direction（必要分のみ）= 実用上 200-400 文字が目安
+- **Style の3つの数値を混同しない**（別々の層の話）:
+
+| 層 | 値 | 意味 |
+|---|---|---|
+| コアタグ | **120文字以内** | 本キットの必須ルール。1行目のタグ列のみ |
+| Style 欄 全体 | **400文字以内** | 本キットの目標値。コアタグ + Performance Direction |
+| Suno UI の上限 | 1000文字 | Suno 側のハード上限。キットは意図的にここまで使わない |
+
+- Performance Direction を含めるとコアタグの 120 文字は超えるが、Style 欄全体で 400 文字以内に収める
 - ジャンル・音色は正しいが演奏の態度/デリバリーが違う → Performance Direction を追加
 - 基本的な音作りが違う → Style タグ自体を変更
 
@@ -157,7 +168,8 @@ If core Style tags exceed 120 characters:
 1. **Remove secondary adjectives** (keep primary genre + mood)
 2. **Compress instruments** (keep 2-3 key instruments)
 3. **Move detail to Performance Direction block** (separate from core tags)
-If Performance Direction is needed, total Style field can go up to 400 characters.
+If Performance Direction is needed, the kit target for the whole Style field is 400 characters.
+(Suno's own UI cap is 1000 characters; the kit deliberately stays well under it.)
 
 ---
 
