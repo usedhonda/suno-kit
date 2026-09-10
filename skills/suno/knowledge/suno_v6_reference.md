@@ -75,7 +75,7 @@ As of **2026-09-10**, none of the following appear in Suno's V6 blog post or rel
 |---|---|
 | Style field character / token limit | unspecified |
 | Lyrics field character / token limit | unspecified |
-| Internal model identifier (the `mv` value) | unspecified — must be observed, never assumed |
+| Internal model identifier (the `mv` value) | **partly observed** — see below. Still unspecified for `v6-wild` |
 | temperature / top_p / top_k / seed | unspecified — Suno exposes no such controls publicly |
 | Context window | unspecified |
 | System prompt | unspecified |
@@ -89,6 +89,28 @@ As of **2026-09-10**, none of the following appear in Suno's V6 blog post or rel
 
 **Weirdness is a Suno creative control. It is not a documented sampling temperature.**
 Never present it as one.
+
+### Model identifiers — `observed_v6`
+
+Observed **2026-09-10** from a first-party logged-in session, two independent ways: the web app's
+own model-tier map, and a live library response whose clips carry `major_model_version: "v6"`
+next to `model_name: "chirp-hawk"`. The same map reproduces the already-known
+`v5.5 -> chirp-fenix`, which is what makes the new rows trustworthy.
+
+| UI name | Identifier sent as `mv` | Status |
+|---|---|---|
+| v5.5 | `chirp-fenix` | previously known, re-confirmed |
+| v6 | `chirp-hawk` | `observed_v6` (two independent paths) |
+| v6-mini | `chirp-goose` | `observed_v6` (app model-tier map) |
+| **v6-wild** | **unknown** | **not observed — do not guess** |
+
+`v6-wild` is offered in the model picker, but it is not a tier in the app's model map and the
+string does not appear in any loaded front-end asset. That is evidence it is **not a distinct
+`mv` value** — more likely a flag or a server-driven option. Settling it needs one real
+generate request made with `v6-wild` selected.
+
+These are observations of a closed, server-side product, not a published contract. Re-verify
+after any Suno update.
 
 ---
 

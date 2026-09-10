@@ -49,9 +49,22 @@ export interface CreateBody {
   generation_type: "TEXT";
 }
 
+// Observed 2026-09-10 from a first-party logged-in session, two independent ways:
+// the web app's own ModelTier -> identifier map, and a live feed response whose
+// clips carry major_model_version "v6" alongside model_name "chirp-hawk". The map
+// also reproduces the already-known v5.5 -> chirp-fenix, which is what makes it
+// trustworthy for the rows below.
+//
+// v6-wild is deliberately absent: it is offered in the model picker, but it is not
+// a ModelTier in the app bundle and the string never appears in any loaded asset,
+// so no identifier for it has been observed. Do not guess one.
 const MODEL_ALIASES: Record<string, string> = {
   "v5.5": "chirp-fenix",
-  "chirp-fenix": "chirp-fenix"
+  "chirp-fenix": "chirp-fenix",
+  "v6": "chirp-hawk",
+  "chirp-hawk": "chirp-hawk",
+  "v6-mini": "chirp-goose",
+  "chirp-goose": "chirp-goose"
 };
 
 export function buildCreateBody(input: CreateInput): CreateBody {

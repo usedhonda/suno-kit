@@ -38,6 +38,20 @@ test("buildCreateBody maps R6 create fields", () => {
   assert(!("control_sliders" in metadata));
 });
 
+test("buildCreateBody resolves model aliases and keeps v5.5 as the default", () => {
+  const base = { title: "model probe", style: "lo-fi piano", transactionUuid: "tx-model" };
+  // The default must stay v5.5: v6 and v6-wild are paid-only, so defaulting to a V6
+  // model would break free accounts.
+  assert.equal(buildCreateBody({ ...base }).mv, "chirp-fenix");
+  assert.equal(buildCreateBody({ ...base, model: "v6" }).mv, "chirp-hawk");
+  assert.equal(buildCreateBody({ ...base, model: "v6-mini" }).mv, "chirp-goose");
+  // Raw identifiers resolve to themselves.
+  assert.equal(buildCreateBody({ ...base, model: "chirp-hawk" }).mv, "chirp-hawk");
+  // Unknown values pass through untouched. This is what lets a newly released model
+  // be used as soon as its identifier is known, before an alias exists for it.
+  assert.equal(buildCreateBody({ ...base, model: "chirp-unlisted" }).mv, "chirp-unlisted");
+});
+
 test("buildCreateBody can send explicit null captcha fields", () => {
   const body = buildCreateBody({
     title: "verify probe",
