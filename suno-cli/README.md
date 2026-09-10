@@ -103,6 +103,7 @@ Useful optional controls:
 | Flag | Meaning |
 |---|---|
 | `--exclude <text>` | Styles or sounds to avoid |
+| `--model <name>` | Generation model. Defaults to `v5.5` |
 | `--vocal-gender m|f` | Vocal gender hint |
 | `--weirdness <0-100>` | Suno weirdness slider |
 | `--style-influence <0-100>` | Suno style influence slider |
@@ -112,6 +113,8 @@ Useful optional controls:
 | `--cover-start-s <sec>` / `--cover-end-s <sec>` | Cover range in seconds; requires `--cover-clip-id` |
 
 Cover mode uses an existing Suno clip id. Uploading external audio is not implemented.
+
+`--model` only recognizes a couple of known aliases; any other value is passed through to Suno as-is, so a new model can be tried with `--model <raw identifier>` as soon as its identifier is known.
 
 ## Headless Login
 
