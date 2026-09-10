@@ -15,7 +15,7 @@ This file contains the exact output templates. The GPT must follow these structu
 
 ```yaml
 # META (hints; do not sing)
-version: v5.5
+version: v5.5   # 使用モデル。V6 を使うなら v6 / v6-wild / v6-mini
 meta:
   tempo: <int>
   key: "<e.g., F# major>"
@@ -48,6 +48,29 @@ notes:
 ```
 
 **No per-section arrays.** The old `sections` array (vocals/cues/remix_hints per section) ate ~2000 chars. Annotation tags like `[Verse 1 - description]` already carry production hints in the lyrics. META stays global-only.
+
+### V6 用の任意フィールド
+
+V6 を使う場合のみ追加する。**すべて任意** — V5.5 のフローは何も変わらない。
+詳細は `suno_v6_reference.md`。
+
+| フィールド | 用途 | 例 |
+|---|---|---|
+| `model_intent` | precision / exploration / fast のどれを狙うか | `exploration` |
+| `vibe_scene` | 情景そのもの。形容詞では届かない質感に使う | `"midnight on a rooftop"` |
+| `must_preserve` | 局所編集で**変えてはいけない**もの | `["lead vocal melody", "tempo", "key"]` |
+| `must_change` | 局所編集で変える対象 | `["second chorus instrumentation"]` |
+| `references` | 参照素材と**その役割**（素材名だけでは足りない） | `[{ source: "A", role: "vocal phrasing only" }]` |
+
+```yaml
+# V6 を使う場合の追加例（V5.5 では書かない）
+model_intent: exploration
+vibe_scene: "last train home after deciding not to send the message"
+must_preserve: ["lead vocal melody", "tempo", "key"]
+```
+
+これらは**このキットの内部表現**であり、Suno がこのフィールド名を解釈するわけではない。
+最終的に Style / Lyrics / 局所編集の文へ展開して使う。
 
 ### Kanji → Hiragana Conversion Examples
 - 愛してる → あいしてる

@@ -405,7 +405,9 @@ tags: [lyrics, suno]
 
 ## Step 3: 楽曲（Style / Exclude / YAML）
 
-アーティスト設定 × **この曲固有の方向性** から、Suno V5.5 用の出力を生成する。
+アーティスト設定 × **この曲固有の方向性** から、Suno 用の出力を生成する。
+既定は V5.5。V6 を使う場合は Phase A の質問5で意図を決め、`knowledge/suno_v6_reference.md` と
+`knowledge/v55_to_v6_migration.md` を読んでから書き方を切り替える。
 ⚠️ アーティスト設定だけで Style を作ると全曲同じになる。必ず曲固有のインプットを加える。
 
 ### Phase A: 曲固有ヒアリング（対話）
@@ -420,6 +422,19 @@ tags: [lyrics, suno]
    → テキスト指示、ジャンル名、「〇〇みたいな感じ」等
 4. **「変拍子（5/4, 7/8 等）を狙いますか？」**
    → Yes なら `knowledge/suno_v55_reference.md` の「Odd Time Signature / 変拍子プロンプト戦略」を必読。シード音源（クリック/ドラムループ）の有無も確認し、Style に連符語彙（quintuplet / septuplet）とアクセント分割（3+2 / 2+2+3 等）を含め、スライダーを Weirdness 25-40 / Style Influence 70-85 に設定する
+
+5. **「V6 を使いますか？ 使うなら精密／探索／高速のどれ？」**
+   → 既定は **V5.5**（無料でも使え、本キットの知見が最も厚い）。V6 を使う場合のみ意図を聞く:
+
+   | 意図 | モデル | 使いどころ |
+   |---|---|---|
+   | 精密 | `v6` | 仕上げ。狙いが決まっている曲（**有料限定**） |
+   | 探索 | `v6-wild` | 自分では書かない発想がほしい（**有料限定**） |
+   | 高速 | `v6-mini` | 下書き・反復。無料でも使える |
+
+   V6 を選んだら `knowledge/suno_v6_reference.md` を必読。Style の書き方が
+   「タグ列」から「関係を述べた文」に変わる。探索→精密の2段階（`v6-wild` で広げて
+   `v6` で仕上げる）も提案してよい。
 
 ユーザーが「おまかせ」「特にない」と言った場合でも、歌詞の内容・テーマ・感情アークから CC が曲固有の方向性を提案する。アーティスト設定をそのまま流用しない。
 
@@ -438,6 +453,8 @@ Phase A のヒアリング結果 + アーティスト設定 + 歌詞から、Sty
 - **参照曲の調査結果**: BPM/Key/Genre 等（URL がある場合）
 - **歌詞の内容**: テーマ、感情アーク、密度から逆算したムード
 - **最新運用知見**: `knowledge/suno_v55_reference.md` の slider / ending / duet / voices / My Taste 補足
+- **V6 を使う場合**: `knowledge/suno_v6_reference.md`（モデル3系統・局所編集・未確定事項）と
+  `knowledge/v55_to_v6_migration.md`（V5.5 の各ルールの keep/modify/demote 判定）
 
 ### 🚨 プロファイル反映の原則
 
@@ -563,7 +580,7 @@ else: print('✅ OK')
 **4) YAML + Lyrics（歌詞ありの場合、キット目標 4500 / Suno 上限 5000文字以内）**
 ```yaml
 # META (hints; do not sing)
-version: v5.5
+version: <使用モデル。既定 v5.5。V6 なら v6 / v6-wild / v6-mini>
 meta:
   tempo: <int>
   key: "<key>"
@@ -965,7 +982,7 @@ ffmpeg -loop 1 -i "<cover.png>" -i "<audio.wav>" \
   -metadata album="<アルバム名（あれば）>" \
   -metadata genre="<ジャンル>" \
   -metadata date="<YYYY>" \
-  -metadata comment="Made with Suno V5.5" \
+  -metadata comment="Made with Suno <使用モデル: V5.5 / V6 等>" \
   -shortest -movflags +faststart \
   "<output.mp4>"
 ```
@@ -993,6 +1010,19 @@ ffmpeg -loop 1 -i "<cover.png>" -i "<audio.wav>" \
 - スライダー安全範囲: **15-85**
 - Audio Influence: 25%開始、+5%刻み、75%超えない
 - Voices使用時: Style から声・楽器記述を最小化
+
+### V6 を使っている場合の修正手段
+
+**気に入らない箇所があっても、まず全曲再生成に戻らない。** V6 は曲の一部だけを自然言語で
+変更でき、それ以外は保持される。歌詞1語だけの差し替えも可能。
+
+```text
+Change only the second chorus.
+Replace the stacked synth lead with a small gospel choir and handclaps.
+Keep the lead-vocal melody, lyrics, tempo, key, bass line and all other sections unchanged.
+```
+
+守りたいものを明示的に列挙するほど事故が減る。詳細は `knowledge/suno_v6_reference.md`。
 
 ### V5.5 テクニック
 
