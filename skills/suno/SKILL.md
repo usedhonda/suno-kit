@@ -67,7 +67,9 @@ else:
 | `knowledge/style_catalog.md` | ジャンル別テンプレ、アノテーション語彙、フック特性 | 全般 |
 | `knowledge/rap_and_flow.md` | フロー類型、韻スキーム、16小節構成、日本語ラップ | ラップ/Hip Hop時 |
 | `knowledge/english_lyrics.md` | 英語韻体系、プロソディ、バイリンガル戦略 | 英語/バイリンガル時 |
-| `knowledge/suno_v55_reference.md` | V5.5機能、メタタグ、スライダー、Cover/Sample/Inspo | 楽曲生成時 |
+| `knowledge/suno_v55_reference.md` | V5.5機能、メタタグ、スライダー、Cover/Sample/Inspo | 楽曲生成時（既定） |
+| `knowledge/suno_v6_reference.md` | V6のモデル3系統、局所編集/mashup/multimodal、未確定事項 | V6 を使う時 |
+| `knowledge/v55_to_v6_migration.md` | V5.5 の各ルールの keep/modify/demote 判定 | V6 を使う時 |
 | `knowledge/yaml_template.md` | YAML+Style出力テンプレート | 楽曲生成時 |
 
 ---

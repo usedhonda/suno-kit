@@ -56,6 +56,8 @@ knowledge: 何を作るかを決める
 | `rap_and_flow.md` | ラップ専用: フロー、韻スキーム、日本語ラップ |
 | `english_lyrics.md` | 英語/バイリンガル: プロソディ、クロス韻 |
 | `suno_v55_reference.md` | V5.5 リファレンス、Duration Control、inline tags、Cover/Sample/Inspo |
+| `suno_v6_reference.md` | V6 リファレンス、モデル3系統、局所編集 / mashup / multimodal、未確定事項の一覧 |
+| `v55_to_v6_migration.md` | V5.5 の各ルールの keep / modify / demote / retire 判定 |
 | `yaml_template.md` | YAML + Style + Exclude 出力テンプレート |
 
 中核資料として [SunoV5_Prompt_MASTER_REFERENCE.md](SunoV5_Prompt_MASTER_REFERENCE.md) も収録しています。これは V5/V5.5 のプロンプト設計、Double-Layer 構造、コミュニティ発見テクニック、Deep Research 統合ログをまとめた参照文書です。
@@ -180,7 +182,7 @@ knowledge: 何を作るかを決める
 bash scripts/check-consistency.sh
 ```
 
-`GATE: GREEN` が出ることが目安です。README が knowledge 7ファイル（`lyric_craft.md`, `song_structures.md`, `style_catalog.md`, `rap_and_flow.md`, `english_lyrics.md`, `suno_v55_reference.md`, `yaml_template.md`）を参照し続けているか、dangling な knowledge 参照がないかなどを決定論で確認します。
+`GATE: GREEN` が出ることが目安です。README が knowledge 9ファイル（`lyric_craft.md`, `song_structures.md`, `style_catalog.md`, `rap_and_flow.md`, `english_lyrics.md`, `suno_v55_reference.md`, `suno_v6_reference.md`, `v55_to_v6_migration.md`, `yaml_template.md`）を参照し続けているか、dangling な knowledge 参照がないかなどを決定論で確認します。
 
 ## ファイルツリー
 
@@ -206,6 +208,8 @@ suno-kit/
             ├── rap_and_flow.md         # ラップ専用: フロー、韻スキーム、日本語ラップ
             ├── english_lyrics.md       # 英語/バイリンガル: プロソディ、クロス韻
             ├── suno_v55_reference.md   # V5.5 リファレンス、Duration/inline tags
+            ├── suno_v6_reference.md    # V6 リファレンス、モデル3系統、局所編集/mashup/multimodal
+            ├── v55_to_v6_migration.md  # V5.5 → V6 の keep/modify/demote 判定
             └── yaml_template.md        # YAML出力テンプレート
 ```
 

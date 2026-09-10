@@ -44,14 +44,14 @@ if git ls-files | grep -qE '^(docs/|\.claude/|\.local|\.codex/)'; then
   fail "C3 a boundary path is TRACKED in git (non-public content leaked)"
 fi
 
-# C4 — README + SKILL knowledge table reference every knowledge file; count is exactly 7
+# C4 — README + SKILL knowledge table reference every knowledge file; count is exactly 9
 kn=0
 for f in skills/suno/knowledge/*.md; do
   b=$(basename "$f"); kn=$((kn + 1))
   grep -qF -- "$b" README.md || fail "C4 README does not reference knowledge file: $b"
   grep -qF -- "$b" "$sk" || fail "C4 SKILL does not reference knowledge file: $b"
 done
-[ "$kn" -eq 7 ] || fail "C4 knowledge file count is $kn, expected 7 (update README + SKILL on change)"
+[ "$kn" -eq 9 ] || fail "C4 knowledge file count is $kn, expected 9 (update README + SKILL on change)"
 
 # C5 — each agent/*.md `reference:` path resolves to a real file
 for f in agent/*.md; do
