@@ -5,7 +5,8 @@ deliberately does **not** state, and the prompt patterns this kit recommends on 
 confirmed capabilities.
 
 Migration decisions for each V5.5 rule live in `v55_to_v6_migration.md`.
-V5.5 remains documented in `suno_v55_reference.md` and is still the kit default.
+V6 is the kit default. V5.5 is the previous generation: it stays documented in
+`suno_v55_reference.md` and remains reachable by asking for it explicitly.
 
 ---
 
@@ -40,7 +41,8 @@ back into v6 for further refinement". Treat model choice as a creative mode, not
 explore wide on `v6-wild`, then rebuild the winning idea on `v6`.
 
 ⚠️ `v6` and `v6-wild` are **paid-only**. Never assume a user can reach them. `v6-mini` is the only
-V6 model available on the free tier, and V5.5 remains this kit's default.
+V6 model available on the free tier, so a free account must ask for `v6-mini` explicitly.
+The kit defaults to `v6`.
 
 ---
 

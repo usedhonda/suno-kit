@@ -1,7 +1,7 @@
 ---
 name: suno
 description: |
-  Suno V5.5 統合スキル。アーティスト設定 → 歌詞生成 → 楽曲(Style/Exclude/YAML)生成の3ステップで曲を作る。
+  Suno V6 統合スキル（V5.5 も旧モデルとして選択可）。アーティスト設定 → 歌詞生成 → 楽曲(Style/Exclude/YAML)生成の3ステップで曲を作る。
   自由テキストで指示でき、足りない情報は対話で収集する。
   全ての曲はアーティストに紐づく。アーティスト設定があれば歌詞・楽曲から開始。
   トリガー: /suno, 曲作って, 歌詞書いて, スタイル作って, アーティスト作って
@@ -15,7 +15,7 @@ allowed-tools:
   - WebSearch
   - WebFetch
 compression-anchors:
-  - "Suno V5.5 統合スキル"
+  - "Suno V6 統合スキル"
   - "アーティスト → 歌詞 → 楽曲 パイプライン"
   - "アーティスト設定をYAMLで保存・再利用"
   - "歌詞イテレーション+コーチング"
@@ -67,9 +67,9 @@ else:
 | `knowledge/style_catalog.md` | ジャンル別テンプレ、アノテーション語彙、フック特性 | 全般 |
 | `knowledge/rap_and_flow.md` | フロー類型、韻スキーム、16小節構成、日本語ラップ | ラップ/Hip Hop時 |
 | `knowledge/english_lyrics.md` | 英語韻体系、プロソディ、バイリンガル戦略 | 英語/バイリンガル時 |
-| `knowledge/suno_v55_reference.md` | V5.5機能、メタタグ、スライダー、Cover/Sample/Inspo | 楽曲生成時（既定） |
-| `knowledge/suno_v6_reference.md` | V6のモデル3系統、局所編集/mashup/multimodal、未確定事項 | V6 を使う時 |
-| `knowledge/v55_to_v6_migration.md` | V5.5 の各ルールの keep/modify/demote 判定 | V6 を使う時 |
+| `knowledge/suno_v6_reference.md` | V6のモデル3系統、局所編集/mashup/multimodal、未確定事項 | 楽曲生成時（既定） |
+| `knowledge/v55_to_v6_migration.md` | V5.5 の各ルールの keep/modify/demote 判定 | 楽曲生成時（既定） |
+| `knowledge/suno_v55_reference.md` | V5.5機能、メタタグ、スライダー、Cover/Sample/Inspo | 旧モデル V5.5 を使う時 |
 | `knowledge/yaml_template.md` | YAML+Style出力テンプレート | 楽曲生成時 |
 
 ---
@@ -406,8 +406,9 @@ tags: [lyrics, suno]
 ## Step 3: 楽曲（Style / Exclude / YAML）
 
 アーティスト設定 × **この曲固有の方向性** から、Suno 用の出力を生成する。
-既定は V5.5。V6 を使う場合は Phase A の質問5で意図を決め、`knowledge/suno_v6_reference.md` と
-`knowledge/v55_to_v6_migration.md` を読んでから書き方を切り替える。
+既定は **V6**（現行世代）。`knowledge/suno_v6_reference.md` と `knowledge/v55_to_v6_migration.md` を読み、
+Phase A の質問5で precision / exploration / fast のどれを狙うか決める。
+V5.5 は旧モデル。明示的に指定された場合のみ `knowledge/suno_v55_reference.md` に従う。
 ⚠️ アーティスト設定だけで Style を作ると全曲同じになる。必ず曲固有のインプットを加える。
 
 ### Phase A: 曲固有ヒアリング（対話）
@@ -424,7 +425,7 @@ tags: [lyrics, suno]
    → Yes なら `knowledge/suno_v55_reference.md` の「Odd Time Signature / 変拍子プロンプト戦略」を必読。シード音源（クリック/ドラムループ）の有無も確認し、Style に連符語彙（quintuplet / septuplet）とアクセント分割（3+2 / 2+2+3 等）を含め、スライダーを Weirdness 25-40 / Style Influence 70-85 に設定する
 
 5. **「V6 を使いますか？ 使うなら精密／探索／高速のどれ？」**
-   → 既定は **V5.5**（無料でも使え、本キットの知見が最も厚い）。V6 を使う場合のみ意図を聞く:
+   → 既定は **V6**（現行世代）。どの V6 を使うかを聞く:
 
    | 意図 | モデル | 使いどころ |
    |---|---|---|
@@ -580,7 +581,7 @@ else: print('✅ OK')
 **4) YAML + Lyrics（歌詞ありの場合、キット目標 4500 / Suno 上限 5000文字以内）**
 ```yaml
 # META (hints; do not sing)
-version: <使用モデル。既定 v5.5。V6 なら v6 / v6-wild / v6-mini>
+version: <使用モデル。既定 v6。他に v6-wild / v6-mini、旧モデルは v5.5>
 meta:
   tempo: <int>
   key: "<key>"

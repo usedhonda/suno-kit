@@ -15,7 +15,7 @@ This file contains the exact output templates. The GPT must follow these structu
 
 ```yaml
 # META (hints; do not sing)
-version: v5.5   # 使用モデル。V6 を使うなら v6 / v6-wild / v6-mini
+version: v6   # 使用モデル。既定 v6。他に v6-wild / v6-mini、旧モデルは v5.5
 meta:
   tempo: <int>
   key: "<e.g., F# major>"

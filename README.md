@@ -2,7 +2,7 @@
 
 > **Language**: Japanese (日本語) — technical terms in English
 
-Suno V5/V5.5 で曲を作るための制作キットです。中心は Claude Code の **`/suno` スキル**。knowledge はその判断品質を支える知識エンジンで、`suno-cli` は生成投入・回収を担う実行バックエンドです（回収層と `--live` gated create submit は出荷済み）。
+Suno V6 で曲を作るための制作キットです（V5.5 も旧モデルとして継続サポート）。中心は Claude Code の **`/suno` スキル**。knowledge はその判断品質を支える知識エンジンで、`suno-cli` は生成投入・回収を担う実行バックエンドです（回収層と `--live` gated create submit は出荷済み）。
 
 ```text
 knowledge: 何を作るかを決める
@@ -13,7 +13,7 @@ knowledge: 何を作るかを決める
 ## 特長
 
 - **`/suno` スキルが顔** — アーティスト設定 → 歌詞 → Style → Suno自動入力 → マスタリング → X投稿用動画まで、対話で進めるメイン体験
-- **knowledge は知識エンジン** — V5.5 仕様、コミュニティ技法、歌詞設計、ジャンル語彙、YAML テンプレートをスキルが参照する正本
+- **knowledge は知識エンジン** — V6 仕様と V5.5 からの移行判断、コミュニティ技法、歌詞設計、ジャンル語彙、YAML テンプレートをスキルが参照する正本
 - **`suno-cli` は実行層** — スキルが作った payload を Suno に投入し、2 take URL / audio を JSON で回収するバックエンド。回収コマンド（status / urls / download）と `--live` gated create submit は出荷済み
 - **プロンプト設計** — Style / Lyrics / Exclude の書き方、V5.5 音声条件付け、Duration Control、inline tags を統合
 - **SNS時代スタイル** — ドパガキ Recipe、Phonk / Amapiano / Jersey Club、Hyperpop / UK Garage / Drill、sped-up / Vocaloid を収録（community + Cdx review、未実証は A/B 推奨）
@@ -115,6 +115,9 @@ knowledge: 何を作るかを決める
 
 このスキルは **Suno V5/V5.5 の出力特性を前提とした修復的アプローチ** を取ります。仕様は ChatGPT × Gemini のクロス議論で策定しました。
 
+> ⚠️ 下記の周波数特性・ダイナミクスの数値は **V5/V5.5 の出力を実測して決めたもの**で、V6 では未検証です。
+> V6 の音の傾向が違えば補正量も変わります。V6 の曲に適用する場合はスキャン結果を見て判断してください。
+
 **処理エンジン:** [Spotify Pedalboard](https://github.com/spotify/pedalboard)（JUCE ベース — DAW プラグインと同等品質）
 
 **処理フロー:**
@@ -160,7 +163,10 @@ knowledge: 何を作るかを決める
 | **Suno Style Analyzer V5.5** | YouTube URL からスタイル解析 → Style/Exclude/YAML 生成 | [mygpts/style-analyzer/README.md](mygpts/style-analyzer/README.md) |
 | **Suno Lyrics Writer V5.5** | テーマから歌詞生成（ラップ・英語・バイリンガル対応） | [mygpts/lyrics-writer/README.md](mygpts/lyrics-writer/README.md) |
 
-## V5.5 で押さえるべきポイント
+## V5.5（旧モデル）で押さえるべきポイント
+
+> V6 の書き方は `skills/suno/knowledge/suno_v6_reference.md`、V5.5 からの移行判断は
+> `v55_to_v6_migration.md` を参照。以下は旧モデル V5.5 を明示指定して使う場合の要点です。
 
 - **Style は短いタグ列** — カンマ区切りの名詞句。散文より安定
 - **Cover が逸脱したら Sample 全曲再生成** — Weird=0/Style=100/Audio=100 が定番レシピ
@@ -242,7 +248,7 @@ cp -R skills/suno ~/.claude/skills/
 
 ## 注意事項
 
-- Suno の仕様は更新されるため、特に V5.5 周辺のパラメータは今後も変わり得ます
+- Suno の仕様は更新されるため、特に V6 周辺のパラメータは今後も変わり得ます（V6 は 2026-09-09 リリース）
 - コミュニティ技法は「効く場面」と「壊す場面」があります。小さく試してください
 - 著作権保護のため、アーティスト名や曲名の直接指定ではなく音響特徴の言語化を推奨します
 

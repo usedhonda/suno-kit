@@ -40,9 +40,10 @@ test("buildCreateBody maps R6 create fields", () => {
 
 test("buildCreateBody resolves model aliases and keeps v5.5 as the default", () => {
   const base = { title: "model probe", style: "lo-fi piano", transactionUuid: "tx-model" };
-  // The default must stay v5.5: v6 and v6-wild are paid-only, so defaulting to a V6
-  // model would break free accounts.
-  assert.equal(buildCreateBody({ ...base }).mv, "chirp-fenix");
+  // V6 is the current generation, so it is the default. v5.5 is the previous one and
+  // stays reachable explicitly. Free-tier accounts should pass v6-mini.
+  assert.equal(buildCreateBody({ ...base }).mv, "chirp-hawk");
+  assert.equal(buildCreateBody({ ...base, model: "v5.5" }).mv, "chirp-fenix");
   assert.equal(buildCreateBody({ ...base, model: "v6" }).mv, "chirp-hawk");
   assert.equal(buildCreateBody({ ...base, model: "v6-mini" }).mv, "chirp-goose");
   // Raw identifiers resolve to themselves.

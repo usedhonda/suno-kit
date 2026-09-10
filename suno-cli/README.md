@@ -103,7 +103,7 @@ Useful optional controls:
 | Flag | Meaning |
 |---|---|
 | `--exclude <text>` | Styles or sounds to avoid |
-| `--model <name>` | Generation model. Defaults to `v5.5` |
+| `--model <name>` | Generation model. Defaults to `v6`. Free accounts should pass `v6-mini`; `v5.5` is the previous generation |
 | `--vocal-gender m|f` | Vocal gender hint |
 | `--weirdness <0-100>` | Suno weirdness slider |
 | `--style-influence <0-100>` | Suno style influence slider |

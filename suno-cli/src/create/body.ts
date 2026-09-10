@@ -70,7 +70,7 @@ const MODEL_ALIASES: Record<string, string> = {
 export function buildCreateBody(input: CreateInput): CreateBody {
   if (!input.title) throw new Error("create requires --title.");
   if (!input.style) throw new Error("create requires --style.");
-  const model = MODEL_ALIASES[input.model ?? "v5.5"] ?? input.model ?? "chirp-fenix";
+  const model = MODEL_ALIASES[input.model ?? "v6"] ?? input.model ?? "chirp-hawk";
   const transactionUuid = input.transactionUuid ?? randomUUID();
   const metadata: Record<string, unknown> = {
     create_mode: "custom",
