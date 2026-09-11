@@ -48,7 +48,12 @@ for target in $TARGETS; do
     # a nested link INSIDE the directory and still exit 0, leaving the stale copy
     # live while reporting success. Refuse unless the caller asked for --force.
     if [ "$FORCE" -eq 1 ]; then
-      backup="$target.bak-$(date +%Y%m%d-%H%M%S)"
+      # Back up OUTSIDE the skills directory. A backup left beside the skill would
+      # still be scanned by the agent, registering a second skill with the same
+      # 'name:' from the stale copy.
+      backup_dir="$(dirname "$parent")/skill-backups"
+      mkdir -p "$backup_dir" || { echo "FAIL  $agent: could not create $backup_dir" >&2; rc=1; continue; }
+      backup="$backup_dir/suno.bak-$(date +%Y%m%d-%H%M%S)"
       mv "$target" "$backup" || { echo "FAIL  $agent: could not move aside $target" >&2; rc=1; continue; }
       ln -s "$SRC" "$target"
       echo "REPLACED $agent: previous contents moved to $backup"
