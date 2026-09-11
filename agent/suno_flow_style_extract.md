@@ -1,7 +1,9 @@
 ---
 task: style_extract
 trigger_keywords: ["YouTube URL", "Style解析", "スタイル解析して", "この曲のスタイル", "曲の雰囲気を調べて"]
-reference: "../SunoV5_Prompt_MASTER_REFERENCE.md"
+reference: "../skills/suno/knowledge/suno_v6_reference.md"
+migration: "../skills/suno/knowledge/v55_to_v6_migration.md"
+legacy: "../SunoV5_Prompt_MASTER_REFERENCE.md"
 output_format: "style_block"
 ---
 

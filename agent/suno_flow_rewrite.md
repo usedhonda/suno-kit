@@ -1,7 +1,9 @@
 ---
 task: rewrite
 trigger_keywords: ["リライト", "書き直して", "rewrite", "rework", "reinterpret", "再解釈"]
-reference: "../SunoV5_Prompt_MASTER_REFERENCE.md"
+reference: "../skills/suno/knowledge/suno_v6_reference.md"
+migration: "../skills/suno/knowledge/v55_to_v6_migration.md"
+legacy: "../SunoV5_Prompt_MASTER_REFERENCE.md"
 output_format: "yaml+lyrics"
 ---
 

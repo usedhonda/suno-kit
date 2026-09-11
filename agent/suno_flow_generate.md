@@ -1,7 +1,9 @@
 ---
 task: generate
 trigger_keywords: ["新曲", "曲を作って", "プロンプトを作って", "create", "generate", "compose"]
-reference: "../SunoV5_Prompt_MASTER_REFERENCE.md"
+reference: "../skills/suno/knowledge/suno_v6_reference.md"
+migration: "../skills/suno/knowledge/v55_to_v6_migration.md"
+legacy: "../SunoV5_Prompt_MASTER_REFERENCE.md"
 output_format: "yaml+lyrics"
 ---
 

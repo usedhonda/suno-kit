@@ -1,7 +1,9 @@
 ---
 task: album
 trigger_keywords: ["アルバム", "複数曲", "まとめて作って", "album", "multiple tracks", "EP", "コンセプトアルバム"]
-reference: "../SunoV5_Prompt_MASTER_REFERENCE.md"
+reference: "../skills/suno/knowledge/suno_v6_reference.md"
+migration: "../skills/suno/knowledge/v55_to_v6_migration.md"
+legacy: "../SunoV5_Prompt_MASTER_REFERENCE.md"
 output_format: "yaml+lyrics (multiple)"
 ---
 
