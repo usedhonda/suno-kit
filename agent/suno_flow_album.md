@@ -10,9 +10,12 @@ output_format: "yaml+lyrics (multiple)"
 # 🎧 Suno アルバム制作フロー仕様書（suno_flow_album.md）
 
 ## 🧭 概要
-この仕様書は、Suno V5/V5.5で統一されたコンセプトのもと複数楽曲（アルバム・EP）を制作するエージェント実行フローを定義する。
-ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込み、
+この仕様書は、Suno V6 で統一されたコンセプトのもと複数楽曲（アルバム・EP）を制作するエージェント実行フローを定義する。
+ChatGPTは本仕様書および `skills/suno/knowledge/suno_v6_reference.md` / `v55_to_v6_migration.md` を読み込み、
 **一貫性のあるテーマ・サウンド・ストーリー性**を持つ複数のプロンプトを生成する。
+
+> アルバム構成の設計（役割分担・調性計画・テンポの弧）は**モデル世代に依存しない**。V6 でもそのまま通用する。
+> V6 で変わるのは Style の書き方とモデル運用で、それは末尾の「V6 Notes」にまとめてある。
 
 ---
 
@@ -20,7 +23,7 @@ ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込
 アルバムプロンプトは以下の構造を持つ：
 
 ```yaml
-# === Suno V5/V5.5 Album Project ===
+# === Suno V6 Album Project ===
 album_meta:
   title: [アルバムタイトル]
   concept: [コンセプト・テーマ]
@@ -236,7 +239,7 @@ production_unity: "ミックスアプローチは統一"
 1. ユーザーが「90年代シティポップ風アルバム5曲作って」と依頼
 2. ChatGPTがアルバムコンセプトを確認
 3. トラックリスト構成を提案（Track 1-5の役割）
-4. 本仕様書 + マスターリファレンスを読み込み
+4. 本仕様書 + V6 ナレッジ（`suno_v6_reference.md` / `v55_to_v6_migration.md`）を読み込み
 5. 各トラックのYAML + Lyricsを生成（5つのブロック）
 6. Sonic Palette / Key Progression / Tempo Arcを明示
 7. Agent Modeで Suno.com を開き、Track 1から順次入力実行
@@ -246,7 +249,7 @@ production_unity: "ミックスアプローチは統一"
 ## 📝 出力例
 
 ```yaml
-# === Suno V5 Album: "Tokyo Midnight Stories" ===
+# === Suno V6 Album: "Tokyo Midnight Stories" ===
 album_meta:
   title: "Tokyo Midnight Stories"
   concept: "深夜の東京を舞台にした5つの物語"
@@ -274,7 +277,7 @@ meta:
   signature: "4/4"
   form: "Intro → Verse → Chorus → Verse → Chorus → Bridge → Chorus → Outro"
   vibe: "Upbeat nostalgic city pop"
-  # V5.5: style as short comma-separated tags
+  # V6: 属性の関係を述べる（🧪 V5.5 由来のタグ列も引き続き有効。下は後者の例）
   style: "city pop, 115 BPM, bright, nostalgic, Rhodes, DX7"
 
 structure:
@@ -356,28 +359,38 @@ lyrics:
 
 ---
 
-## 🆕 V5.5 Notes
+## 🆕 V6 Notes
 
-### Style Format
-- 各トラックのstyleは短いカンマ区切りタグで記述
-- 例: `city pop, 115 BPM, bright, nostalgic, Rhodes, DX7`
+### Style の書き方
+- ✅ V6 確認済み: V6 は vocals / instrumentation / structure / mood / references / feel をより深く解釈する
+- 既定は**属性どうしの関係を述べる**書き方。アルバムでは**全曲で同じ関係文の骨格を使い回す**と一貫性が出る
+- 🧪 V5.5 由来 / V6 未検証: 短いカンマ区切りタグ列も引き続き有効
+  （例: `city pop, 115 BPM, bright, nostalgic, Rhodes, DX7`）
+- ❓ 公式未記載: V6 の Style 文字数上限
 
 ### Annotation Tags for Quality Control
 - アノテーションタグ `[SECTION - description]` を使ってセクションごとの制作ヒントを埋め込む
 - アルバム全体の一貫性維持に有効（共通のアノテーション語彙を統一する）
 - 例: 全トラックのVERSEに `vocal-forward` を入れてボーカルバランスを統一
 
-### Voices / Custom Models
-- アルバム全体を同じVoiceで統一すると、トラック間の一貫性が向上
-- Custom Modelsで自分の過去曲を学習させた場合、アルバム全体のサウンドシグネチャを維持できる
+### アルバム単位でのモデル運用
+
+**Voices と Custom Models を同じものとして扱わないこと。V6 での立場が違う。**
+
+- ✅ V6 確認済み: **Custom Models は V6 対応**（「Fine-tune v6 on your own tracks」）。
+  既存の Custom Model は自動的に V6 で動くようアップグレードされ、旧モデルで作った曲は再生可能なまま残る。
+  自分の過去曲を学習させたモデルを使えば、アルバム全体のサウンドシグネチャを保てる
+- ❓ 公式未記載: **Voices** の V6 互換性。全曲を同じ Voice で統一する運用は V5.5 期のもので、V6 では未検証
+- 探索が要る曲だけ `v6-wild` で方向を探し、決まったら `v6` で仕上げる。
+  アルバムでは**先に1曲を `v6` で確定させ、その関係文を他曲の雛形にする**のが崩れにくい
 
 ---
 
 ## 🔄 バージョン管理
 
 ```yaml
-version: 1.1.0
-last_updated: 2026-03-27
+version: 2.0.0
+last_updated: 2026-09-11
 author: usedhonda
 ```
 
