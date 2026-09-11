@@ -16,7 +16,7 @@ knowledge: 何を作るかを決める
 - **エージェント共用** — Claude Code と Codex の両方に同じスキルを symlink で配る。正本はこのリポジトリ1箇所だけ
 - **knowledge は知識エンジン** — V6 仕様と V5.5 からの移行判断、コミュニティ技法、歌詞設計、ジャンル語彙、YAML テンプレートをスキルが参照する正本
 - **`suno-cli` は実行層** — スキルが作った payload を Suno に投入し、2 take URL / audio を JSON で回収するバックエンド。回収コマンド（status / urls / download）と `--live` gated create submit は出荷済み
-- **プロンプト設計** — Style / Lyrics / Exclude の書き方、V5.5 音声条件付け、Duration Control、inline tags を統合
+- **プロンプト設計** — Style / Lyrics / Exclude の書き方に加え、V6 の書き方と、V5.5 の音声条件付け / Duration Control / inline tags を統合
 - **SNS時代スタイル** — ドパガキ Recipe、Phonk / Amapiano / Jersey Club、Hyperpop / UK Garage / Drill、sped-up / Vocaloid を収録（community + Cdx review、未実証は A/B 推奨）
 - **Suno特化オートマスタリング** — Suno の音のクセ（シマー、泥、既圧縮、音量不足）を前提にスキャン → 判定 → 補正
 - **整合ゲート** — `scripts/check-consistency.sh` で README / knowledge / SKILL の決定論チェックを実行
@@ -38,7 +38,7 @@ knowledge: 何を作るかを決める
 |---------|------|
 | **アーティスト** | 対話で深掘り → Markdownプロファイル保存。全曲がアーティストに紐づく |
 | **歌詞** | テーマから生成 or 持ち込み歌詞を保護。イテレーション（部分修正）対応。漢字版+ひらがな版の2ファイル出力 |
-| **Style/YAML** | URL参照 or テキスト指示 → Style + Exclude + YAML。文字数は機械カウントで検証（コアタグ 120 / Style 全体 400 / YAML+歌詞 4500） |
+| **Style/YAML** | URL参照 or テキスト指示 → Style + Exclude + YAML。文字数は機械カウントで検証（コアタグ 120 / Style 全体 400 / YAML+歌詞 4500 — いずれも**キット目標値**で、Suno 側のハード上限は Style 1000 / YAML+歌詞 5000） |
 | **Suno自動入力** | Tampermonkey連携。生成結果をクリップボード経由でSunoに一発入力 |
 | **マスタリング** | WAVスキャン → Suno特有のクセを判定 → Pedalboard（DAW品質）で補正 → -14 LUFS ノーマライズ |
 | **X用動画** | カバー画像+音声 → 5MB使い切り動画。ビットレート逆算+メタデータ埋め込み |
@@ -60,7 +60,7 @@ symlink なので**正本はこのリポジトリ1箇所**だけ。ここを編�
 
 ## Knowledge Engine
 
-`skills/suno/knowledge/` は `/suno` スキルの品質の源泉です。単なる付属マニュアルではなく、歌詞、構成、Style、YAML、V5.5 workflow を判断するための参照基盤です。
+`skills/suno/knowledge/` は `/suno` スキルの品質の源泉です。単なる付属マニュアルではなく、歌詞、構成、Style、YAML、そして V6 / V5.5 それぞれの workflow を判断するための参照基盤です。
 
 | ファイル | 役割 |
 |---|---|
@@ -210,7 +210,10 @@ bash scripts/check-consistency.sh
 suno-kit/
 ├── README.md
 ├── LICENSE
+├── AGENTS.md / CLAUDE.md               # 共有指示レイヤー（公開前提）
 ├── SunoV5_Prompt_MASTER_REFERENCE.md   # 中核マニュアル（15テクニック+81引用）
+├── .github/workflows/publish.yml       # タグ push で suno-cli を npm 公開
+├── .loop/                              # 自動ループの状態ファイル
 ├── agent/                              # 用途別フロー
 ├── mygpts/                             # ChatGPT CustomGPT
 │   ├── style-analyzer/
@@ -219,6 +222,7 @@ suno-kit/
 │   ├── check-consistency.sh            # README / knowledge / SKILL 整合ゲート
 │   ├── install-skill.sh                # CC / Cdx 両方へ skills/suno を symlink
 │   └── suno-autofill.user.js           # Tampermonkey（Suno自動入力）
+├── suno-cli/                           # 実行層（TypeScript + Node 22、npm 公開）
 └── skills/
     └── suno/                           # /suno スキル（自己完結型・正本）
         ├── SKILL.md
