@@ -58,6 +58,12 @@ export interface CreateBody {
 // v6-wild is deliberately absent: it is offered in the model picker, but it is not
 // a ModelTier in the app bundle and the string never appears in any loaded asset,
 // so no identifier for it has been observed. Do not guess one.
+//
+// v5.5, and every model before v6, were retired by Suno on 2026-09-09 ("All models
+// prior to v6 have been retired"). The alias is kept so an identifier recorded in an
+// existing ledger entry still resolves to what it always meant -- not so that a new
+// generation can select it. Whether Suno still accepts the request is Suno's call,
+// not something this table can promise.
 const MODEL_ALIASES: Record<string, string> = {
   "v5.5": "chirp-fenix",
   "chirp-fenix": "chirp-fenix",
@@ -66,6 +72,15 @@ const MODEL_ALIASES: Record<string, string> = {
   "v6-mini": "chirp-goose",
   "chirp-goose": "chirp-goose"
 };
+
+// Kept next to the alias table so the two never drift apart. Resolving a retired
+// identifier is still correct -- that is what the value has always meant -- but asking
+// Suno to generate with one is a different matter, and only Suno can answer it.
+const RETIRED_MODELS = new Set(["v5.5", "chirp-fenix"]);
+
+export function isRetiredModel(model: string | undefined): boolean {
+  return model !== undefined && RETIRED_MODELS.has(model);
+}
 
 export function buildCreateBody(input: CreateInput): CreateBody {
   if (!input.title) throw new Error("create requires --title.");

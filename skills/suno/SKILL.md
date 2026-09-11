@@ -1,7 +1,7 @@
 ---
 name: suno
 description: |
-  Suno V6 統合スキル（V5.5 も旧モデルとして選択可）。アーティスト設定 → 歌詞生成 → 楽曲(Style/Exclude/YAML)生成の3ステップで曲を作る。
+  Suno V6 統合スキル（V5.5 以前は退役済み）。アーティスト設定 → 歌詞生成 → 楽曲(Style/Exclude/YAML)生成の3ステップで曲を作る。
   自由テキストで指示でき、足りない情報は対話で収集する。
   全ての曲はアーティストに紐づく。アーティスト設定があれば歌詞・楽曲から開始。
   トリガー: /suno, 曲作って, 歌詞書いて, スタイル作って, アーティスト作って, Suno prompt, Suno lyrics, Suno 用 YAML, Suno の WAV を整えて
@@ -70,7 +70,7 @@ else:
 | `knowledge/english_lyrics.md` | 英語韻体系、プロソディ、バイリンガル戦略 | 英語/バイリンガル時 |
 | `knowledge/suno_v6_reference.md` | V6のモデル3系統、局所編集/mashup/multimodal、未確定事項 | 楽曲生成時（既定） |
 | `knowledge/v55_to_v6_migration.md` | V5.5 の各ルールの keep/modify/demote 判定 | 楽曲生成時（既定） |
-| `knowledge/suno_v55_reference.md` | V5.5機能、メタタグ、スライダー、Cover/Sample/Inspo | 旧モデル V5.5 を使う時 |
+| `knowledge/suno_v55_reference.md` | V5.5機能、メタタグ、スライダー、Cover/Sample/Inspo | 📦 退役済み。V5.5 期の曲を読み解く時 |
 | `knowledge/yaml_template.md` | YAML+Style出力テンプレート | 楽曲生成時 |
 
 ---
@@ -409,7 +409,8 @@ tags: [lyrics, suno]
 アーティスト設定 × **この曲固有の方向性** から、Suno 用の出力を生成する。
 既定は **V6**（現行世代）。`knowledge/suno_v6_reference.md` と `knowledge/v55_to_v6_migration.md` を読み、
 Phase A の質問5で precision / exploration / fast のどれを狙うか決める。
-V5.5 は旧モデル。明示的に指定された場合のみ `knowledge/suno_v55_reference.md` に従う。
+📦 **V5.5 以前は 2026-09-09 に退役済み**（公式 v6 FAQ: "All models prior to v6 have been retired"）。
+新規生成では選べない。過去に作った曲の解釈や、当時の設定を読み解く時だけ `knowledge/suno_v55_reference.md` に従う。
 ⚠️ アーティスト設定だけで Style を作ると全曲同じになる。必ず曲固有のインプットを加える。
 
 ### Phase A: 曲固有ヒアリング（対話）
@@ -582,7 +583,7 @@ else: print('✅ OK')
 **4) YAML + Lyrics（歌詞ありの場合、キット目標 4500 / Suno 上限 5000文字以内）**
 ```yaml
 # META (hints; do not sing)
-version: <使用モデル。既定 v6。他に v6-wild / v6-mini、旧モデルは v5.5>
+version: <使用モデル。既定 v6。他に v6-wild / v6-mini。v5.5 以前は退役済み>
 meta:
   tempo: <int>
   key: "<key>"

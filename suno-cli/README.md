@@ -103,7 +103,7 @@ Useful optional controls:
 | Flag | Meaning |
 |---|---|
 | `--exclude <text>` | Styles or sounds to avoid |
-| `--model <name>` | Generation model. Defaults to `v6`. Free accounts should pass `v6-mini`; `v5.5` is the previous generation |
+| `--model <name>` | Generation model. Defaults to `v6`. Free accounts should pass `v6-mini`. `v5.5` and every earlier model were retired by Suno on 2026-09-09 — the alias still resolves, but Suno decides whether it accepts the request |
 | `--vocal-gender m|f` | Vocal gender hint |
 | `--weirdness <0-100>` | Suno weirdness slider |
 | `--style-influence <0-100>` | Suno style influence slider |

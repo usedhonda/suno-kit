@@ -11,6 +11,7 @@ import { resolveTarget } from "./commands/resolve-target.js";
 import { statusCommand } from "./commands/status.js";
 import { urlsCommand } from "./commands/urls.js";
 import { resolvePathConfig } from "./config/paths.js";
+import { isRetiredModel } from "./create/body.js";
 import { LedgerStore } from "./ledger/store.js";
 import { redactString } from "./safety/redact.js";
 
@@ -132,7 +133,17 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   if (args.exclude) Object.assign(createOptions, { exclude: args.exclude });
   if (args.lyrics) Object.assign(createOptions, { lyrics: args.lyrics });
   if (args.instrumental !== undefined) Object.assign(createOptions, { instrumental: args.instrumental });
-  if (args.model) Object.assign(createOptions, { model: args.model });
+  if (args.model) {
+    Object.assign(createOptions, { model: args.model });
+    // stdout carries the machine-readable result, so a human-facing notice belongs on
+    // stderr. Warn rather than refuse: the identifier still resolves to what it always
+    // meant, and whether Suno accepts the request is Suno's call, not ours to pre-empt.
+    if (isRetiredModel(args.model)) {
+      process.stderr.write(
+        `warning: Suno retired "${args.model}" on 2026-09-09; the request may be refused.\n`
+      );
+    }
+  }
   if (args.vocalGender) Object.assign(createOptions, { vocalGender: args.vocalGender });
   if (args.captchaToken) Object.assign(createOptions, { token: args.captchaToken });
   if (args.tokenProvider !== undefined) Object.assign(createOptions, { tokenProvider: args.tokenProvider });

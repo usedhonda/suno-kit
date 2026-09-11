@@ -38,10 +38,11 @@ test("buildCreateBody maps R6 create fields", () => {
   assert(!("control_sliders" in metadata));
 });
 
-test("buildCreateBody resolves model aliases and keeps v5.5 as the default", () => {
+test("buildCreateBody resolves model aliases and defaults to v6", () => {
   const base = { title: "model probe", style: "lo-fi piano", transactionUuid: "tx-model" };
-  // V6 is the current generation, so it is the default. v5.5 is the previous one and
-  // stays reachable explicitly. Free-tier accounts should pass v6-mini.
+  // V6 is the current generation, so it is the default. v5.5 was retired on 2026-09-09;
+  // its alias is kept only so an identifier already recorded in a ledger still resolves.
+  // Free-tier accounts should pass v6-mini.
   assert.equal(buildCreateBody({ ...base }).mv, "chirp-hawk");
   assert.equal(buildCreateBody({ ...base, model: "v5.5" }).mv, "chirp-fenix");
   assert.equal(buildCreateBody({ ...base, model: "v6" }).mv, "chirp-hawk");

@@ -2,7 +2,7 @@
 
 > **Language**: Japanese (日本語) — technical terms in English
 
-Suno V6 で曲を作るための制作キットです（V5.5 も旧モデルとして継続サポート）。中心は **`/suno` スキル**で、**Claude Code と Codex の両方から同じ実体を使えます**。knowledge はその判断品質を支える知識エンジンで、`suno-cli` は生成投入・回収を担う実行バックエンドです（回収層と `--live` gated create submit は出荷済み）。
+Suno V6 で曲を作るための制作キットです（**V5.5 以前は 2026-09-09 に退役**。知見は記録として残しています）。中心は **`/suno` スキル**で、**Claude Code と Codex の両方から同じ実体を使えます**。knowledge はその判断品質を支える知識エンジンで、`suno-cli` は生成投入・回収を担う実行バックエンドです（回収層と `--live` gated create submit は出荷済み）。
 
 ```text
 knowledge: 何を作るかを決める
@@ -177,10 +177,11 @@ symlink なので**正本はこのリポジトリ1箇所**だけ。ここを編�
 | **Suno Style Analyzer V5.5** | YouTube URL からスタイル解析 → Style/Exclude/YAML 生成 | [mygpts/style-analyzer/README.md](mygpts/style-analyzer/README.md) |
 | **Suno Lyrics Writer V5.5** | テーマから歌詞生成（ラップ・英語・バイリンガル対応） | [mygpts/lyrics-writer/README.md](mygpts/lyrics-writer/README.md) |
 
-## V5.5（旧モデル）で押さえるべきポイント
+## V5.5（退役済み）期の知見
 
 > V6 の書き方は `skills/suno/knowledge/suno_v6_reference.md`、V5.5 からの移行判断は
-> `v55_to_v6_migration.md` を参照。以下は旧モデル V5.5 を明示指定して使う場合の要点です。
+> `v55_to_v6_migration.md` を参照。以下は**退役した V5.5 期の知見**で、当時作った曲を読み解くための記録です。
+> Suno 公式は「v6 より前の全モデルは退役した（作った曲はライブラリに残る）」としています。
 
 - **Style は短いタグ列** — カンマ区切りの名詞句。散文より安定
 - **Cover が逸脱したら Sample 全曲再生成** — Weird=0/Style=100/Audio=100 が定番レシピ

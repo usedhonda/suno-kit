@@ -5,8 +5,10 @@ deliberately does **not** state, and the prompt patterns this kit recommends on 
 confirmed capabilities.
 
 Migration decisions for each V5.5 rule live in `v55_to_v6_migration.md`.
-V6 is the kit default. V5.5 is the previous generation: it stays documented in
-`suno_v55_reference.md` and remains reachable by asking for it explicitly.
+V6 is the kit default. Suno retired every earlier model on 2026-09-09 — "All models prior
+to v6 have been retired, but your songs will still be in your library and remain
+unchanged" (v6 FAQ) — so V5.5 is no longer something to generate with. It stays
+documented in `suno_v55_reference.md` as a record of how the V5.5-era songs were made.
 
 ---
 
