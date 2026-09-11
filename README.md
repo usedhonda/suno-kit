@@ -2,7 +2,7 @@
 
 > **Language**: Japanese (日本語) — technical terms in English
 
-Suno V6 で曲を作るための制作キットです（V5.5 も旧モデルとして継続サポート）。中心は Claude Code の **`/suno` スキル**。knowledge はその判断品質を支える知識エンジンで、`suno-cli` は生成投入・回収を担う実行バックエンドです（回収層と `--live` gated create submit は出荷済み）。
+Suno V6 で曲を作るための制作キットです（V5.5 も旧モデルとして継続サポート）。中心は **`/suno` スキル**で、**Claude Code と Codex の両方から同じ実体を使えます**。knowledge はその判断品質を支える知識エンジンで、`suno-cli` は生成投入・回収を担う実行バックエンドです（回収層と `--live` gated create submit は出荷済み）。
 
 ```text
 knowledge: 何を作るかを決める
@@ -13,6 +13,7 @@ knowledge: 何を作るかを決める
 ## 特長
 
 - **`/suno` スキルが顔** — アーティスト設定 → 歌詞 → Style → Suno自動入力 → マスタリング → X投稿用動画まで、対話で進めるメイン体験
+- **エージェント共用** — Claude Code と Codex の両方に同じスキルを symlink で配る。正本はこのリポジトリ1箇所だけ
 - **knowledge は知識エンジン** — V6 仕様と V5.5 からの移行判断、コミュニティ技法、歌詞設計、ジャンル語彙、YAML テンプレートをスキルが参照する正本
 - **`suno-cli` は実行層** — スキルが作った payload を Suno に投入し、2 take URL / audio を JSON で回収するバックエンド。回収コマンド（status / urls / download）と `--live` gated create submit は出荷済み
 - **プロンプト設計** — Style / Lyrics / Exclude の書き方、V5.5 音声条件付け、Duration Control、inline tags を統合
@@ -23,6 +24,9 @@ knowledge: 何を作るかを決める
 ## `/suno` Skill
 
 `/suno` はこの repo のメインプロダクトです。ユーザーの入力を受け、knowledge を読んで、Suno に貼れる Style / Exclude / Lyrics / YAML と、必要な後処理を組み立てます。
+
+**Claude Code 専用ではありません。** スキル本体は agent 非依存な Markdown なので、Claude Code と Codex の
+どちらからでも同じファイルを読んで動きます（Codex は Claude 固有の frontmatter を無視します）。
 
 ```
 /suno → アーティスト設定 → 歌詞生成 → Style/YAML生成 → Sunoに送る → マスタリング → X用動画
@@ -41,8 +45,18 @@ knowledge: 何を作るかを決める
 
 ### Setup
 
-1. `skills/suno/` フォルダを `~/.claude/skills/` にコピー
-2. 完了。knowledgeファイルを内包しているのでフォルダ単体で動作します
+```bash
+bash scripts/install-skill.sh
+```
+
+これだけです。インストール済みの agent（`~/.claude/skills/` と `~/.codex/skills/`）**すべてに**、
+このリポジトリの `skills/suno/` を symlink します。入っていない agent は黙って読み飛ばします。
+
+symlink なので**正本はこのリポジトリ1箇所**だけ。ここを編集すれば両方の agent に即反映され、
+コピーし直す手順は要りません。
+
+すでに実体のディレクトリが置かれている場合は、**上書きせず停止**します（中身を確認したうえで
+`--force` を付けると、退避してから張り直します）。
 
 ## Knowledge Engine
 
@@ -223,19 +237,13 @@ suno-kit/
 
 正本はこのリポジトリの `skills/suno/knowledge/` です。ここを編集します。
 
-ただし `/suno` スキルが実行時に読むのは **Setup でコピーした `~/.claude/skills/suno/` 側**です。
-リポジトリを編集しただけでは反映されないので、編集後に Setup と同じコピーをやり直してください。
+Setup が symlink を張っているので、**コピーし直す手順はありません。**
+ここを編集した時点で Claude Code 側も Codex 側も同じファイルを読みます。
 
-```bash
-cp -R skills/suno ~/.claude/skills/
-```
-
-（コピーの代わりに `ln -s "$PWD/skills/suno" ~/.claude/skills/suno` でシンボリックリンクにすれば、
-以後は編集が即反映されます。）
-
-> ⚠️ **リンク切れは静かに起きます。** シンボリックリンク運用でリポジトリを移動・改称すると、
-> リンクが切れたまま `/suno` が動かなくなり、エラーも出ません。心当たりがあるときは
-> `ls -la ~/.claude/skills/suno` でリンク先が実在するか確認してください。
+> ⚠️ **リンク切れは静かに起きます。** リポジトリを移動・改称すると、リンクが切れたまま
+> `/suno` が動かなくなり、エラーも出ません（実際にこれが起き、約2か月間気づきませんでした）。
+> 心当たりがあるときは `bash scripts/install-skill.sh` をもう一度実行してください。
+> 現状確認だけなら `ls -la ~/.claude/skills/suno ~/.codex/skills/suno` でリンク先が実在するか見られます。
 
 ## 情報の立場
 
