@@ -10,9 +10,25 @@ output_format: "yaml+lyrics"
 # 🎧 Suno リミックスフロー仕様書（suno_flow_remix.md）
 
 ## 🧭 概要
-この仕様書は、既存楽曲をSuno V5/V5.5でリミックス・リアレンジするためのエージェント実行フローを定義する。
-ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込み、
+この仕様書は、既存楽曲を Suno V6 でリミックス・リアレンジするためのエージェント実行フローを定義する。
+ChatGPTは本仕様書および `skills/suno/knowledge/suno_v6_reference.md` / `v55_to_v6_migration.md` を読み込み、
 元曲の歌詞とメロディーを保ちつつ、**ビート・アレンジ・雰囲気を大胆に変更**したプロンプトを生成する。
+
+---
+
+## 🔀 最初に決めること: リミックス経路
+
+**V6 では「何を入力に持っているか」で手段が変わる。ここを飛ばすと使えない手を延々と説明することになる。**
+
+| 入力 | V6 での手段 | 補足 |
+|---|---|---|
+| **自分の Suno 曲** | ✅ 局所編集 | 変更点と **保つもの**を自然言語で書く。作り直さない |
+| **権利を持つ手持ち音源が複数** | ✅ multi-source | 各ソースに**役割**を与え、持ち込まないものを明記 |
+| **外部曲の URL / テキスト参照のみ** | 通常生成 | 局所編集も mashup も使えない。以下のフローをそのまま使う |
+
+局所編集は**自分の Suno 曲にしか使えない**。`original_reference` に外部曲の URL を置く従来の使い方は
+3行目のケースに当たるので、通常生成として本フローを続けること。
+根拠: `skills/suno/knowledge/v55_to_v6_migration.md` §3 / §4
 
 ---
 
@@ -20,7 +36,7 @@ ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込
 リミックスプロンプトは以下の情報を含む：
 
 ```yaml
-# === Suno V5 Remix Prompt ===
+# === Suno V6 Remix Prompt ===
 meta:
   original_reference: [元曲URL・タイトル]
   remix_type: [Club Mix / Acoustic / Lo-fi / Trap / etc.]
@@ -28,14 +44,18 @@ meta:
   remix_tempo: [新しいBPM]
   original_key: [元のキー]
   remix_key: [新しいキー or 維持]
-  # V5.5: style is short comma-separated tags, not prose
-  style: [短いタグをカンマ区切り: "EDM, house, 128 BPM, energetic, synth bass"]
+  # V6: 属性どうしの関係を述べる（🧪 V5.5 由来のタグ列も引き続き有効）
+  style: [例: "house at 128 BPM with a driving synth bass under the original vocal"]
   keywords: [リミックスの方向性]
 
-remix_parameters:
-  weirdness: "50-70%"        # V5.5: higher weirdness + high style_influence = better compliance
-  style_influence: "70-90%"  # V5.5 finding: push higher for remix fidelity
-  audio_influence: "40-60%"  # V5.5: relevant when using Voices (controls vocal character blend)
+remix_plan:
+  route: local_edit | multi_source | regenerate   # 上の「リミックス経路」で決める
+  must_preserve: ["lead vocal melody", "lyrics", "key"]   # 名前を挙げたものが保たれる
+  must_change: ["drum groove", "chorus instrumentation"]
+  sources:                                        # route: multi_source のときだけ
+    - { id: A, role: "vocal phrasing and melodic contour only" }
+    - { id: B, role: "drum groove only" }
+  do_not_carry: ["lyrics from any source"]
   arrangement: [追加楽器・削除楽器]
   fx_processing: [リバーブ・ディレイ・フィルター等]
 
@@ -113,32 +133,12 @@ changes:
   - インプロビゼーション要素
 ```
 
-### 3️⃣ Remix Parameters設定
+### 3️⃣ 変化度の指定
 
-**Weirdness（変化度）**
-```yaml
-35-45%: 控えめなリミックス（ジャンル維持）
-50-60%: 標準的なリミックス（アレンジ大幅変更）
-65-75%: 攻めたリミックス（原曲の面影薄い）
-# V5.5 finding: Weirdness 55-70% + Style Influence 75-90% の組み合わせで
-# リミックス指示への準拠度が大幅に向上
-```
-
-**Style Influence（スタイルの影響度）**
-```yaml
-45-60%: 元曲の雰囲気を保持
-65-75%: 新しいジャンルに大胆シフト
-80-90%: ほぼ別曲（歌詞とメロディーのみ共通）
-# V5.5推奨: リミックスでは70-90%に設定してStyleタグへの忠実度を上げる
-```
-
-**Audio Influence（V5.5: Voices/Custom Models使用時）**
-```yaml
-30-45%: 元音源の声質を薄く参照
-50-65%: バランスよく混合
-70-85%: 元音源の声質を強く維持
-# Voices機能でリミックスする場合、ボーカルキャラクターの保持度を制御
-```
+- ✅ V6 確認済み: **保つもの / 変えるものを自然言語で明示する**のが第一手。
+  名前を挙げなかったものが保たれること自体が、V6 の編集機能の価値
+- 🧪 V5.5 由来 / V6 未検証: スライダー（weirdness / style_influence / audio_influence）による調整
+  → 末尾の「🧪 V5.5 レガシー: スライダー調整」を参照。数値はそこに集約した
 
 ### 4️⃣ アレンジメント戦略
 
@@ -216,7 +216,7 @@ sonic_tags:
 
 ### 推奨事項
 - **元曲の「フック」は必ず残す**（認識可能なリミックスに）
-- **Remix Hintsを活用**（weirdness/style_influence）
+- **保つものを明示する**（must_preserve を書くほど事故が減る）
 - **ジャンル特有の楽器を明記**（808, Rhodes, brass等）
 - **エフェクト処理を具体的に指定**（reverb, delay, filter）
 
@@ -227,9 +227,10 @@ sonic_tags:
 1. ユーザーが「この曲をClub Remixして」と依頼
 2. ChatGPTが元曲情報・歌詞を取得
 3. 元曲のBPM・キー・ジャンルを分析
-4. 本仕様書 + マスターリファレンスを読み込み
-5. リミックスタイプをユーザーに確認（必要に応じて）
-6. Remix Parameters設定
+4. 本仕様書 + V6 ナレッジ（`suno_v6_reference.md` / `v55_to_v6_migration.md`）を読み込み
+5. **リミックス経路を判定**（自分の Suno 曲か / 手持ち音源か / 外部参照のみか）
+6. リミックスタイプをユーザーに確認（必要に応じて）
+7. must_preserve / must_change を明示
 7. YAML + Lyrics形式でプロンプト生成
 8. Agent Modeで Suno.com を開き、自動入力実行
 
@@ -238,7 +239,7 @@ sonic_tags:
 ## 📝 出力例
 
 ```yaml
-# === Suno V5 Remix: Lo-fi Chill Remix ===
+# === Suno V6 Remix: Lo-fi Chill Remix ===
 meta:
   original_reference: "Original upbeat pop song (120 BPM)"
   remix_type: "Lo-fi / Chill Hop"
@@ -249,9 +250,10 @@ meta:
   style: ["Lo-fi Hip Hop", "Chill", "Nostalgic", "Bedroom Pop"]
   keywords: ["vinyl crackle", "jazzy chords", "mellow", "study beats"]
 
-remix_parameters:
-  weirdness: "55%"
-  style_influence: "70%"
+remix_plan:
+  route: regenerate                      # 外部曲参照なので局所編集は使えない
+  must_preserve: ["lead vocal melody", "lyrics", "key"]
+  must_change: ["tempo", "drum feel", "synth palette"]
   arrangement: ["add: vinyl noise, tape saturation, jazzy piano", "remove: bright synths, energetic drums"]
   fx_processing: ["low-pass filter on vocals", "warm tape delay", "subtle reverb"]
 
@@ -283,24 +285,57 @@ lyrics:
 
 ---
 
-## 🆕 V5.5 Notes
+## 🆕 V6 Notes
 
-### Style Format
-- V5.5ではStyleを短いカンマ区切りタグで記述（散文禁止）
-- 例: `EDM, house, 128 BPM, energetic, festival-ready, synth bass, sidechain`
+### Style の書き方
+- ✅ V6 確認済み: V6 は vocals / instrumentation / structure / mood / references / feel をより深く解釈する
+- 既定は**属性どうしの関係を述べる**書き方
+- 🧪 V5.5 由来 / V6 未検証: 短いカンマ区切りタグ列も引き続き有効
+  （例: `EDM, house, 128 BPM, energetic, festival-ready, synth bass, sidechain`）
+- ❓ 公式未記載: V6 の Style 文字数上限
 
-### Slider Tuning (V5.5 Findings)
-- **Weirdness + Style Influence を両方高くする**のがリミックス成功のコツ
-- Weirdness 55-70% + Style Influence 75-90% でStyleタグへの準拠度が大幅に改善
-- Audio Influence はVoices使用時のボーカルキャラクター制御に使用
+---
+
+## 🧪 V5.5 レガシー: スライダー調整（V6 未検証）
+
+> 以下は **V5.5 で有効だった知見**。V6 での挙動は公式に未記載で、本キットでも未再現。
+> 削除はしないが、V6 では**出発点**として使い、結果を見て調整する。A/B の片側としてのみ扱う。
+> 判定根拠: `skills/suno/knowledge/v55_to_v6_migration.md` §10
+
+**Weirdness（変化度）**
+```yaml
+35-45%: 控えめなリミックス（ジャンル維持）
+50-60%: 標準的なリミックス（アレンジ大幅変更）
+65-75%: 攻めたリミックス（原曲の面影薄い）
+# V5.5 finding: Weirdness 55-70% + Style Influence 75-90% の組み合わせで
+# リミックス指示への準拠度が大幅に向上
+```
+
+**Style Influence（スタイルの影響度）**
+```yaml
+45-60%: 元曲の雰囲気を保持
+65-75%: 新しいジャンルに大胆シフト
+80-90%: ほぼ別曲（歌詞とメロディーのみ共通）
+# V5.5推奨: リミックスでは70-90%に設定してStyleタグへの忠実度を上げる
+```
+
+**Audio Influence（Voices / Custom Models 使用時）**
+```yaml
+30-45%: 元音源の声質を薄く参照
+50-65%: バランスよく混合
+70-85%: 元音源の声質を強く維持
+```
+
+- ❓ 公式未記載: V6 におけるスライダーの意味そのもの。
+  Weirdness は Suno の creative control であって、公開されたサンプリング温度ではない
 
 ---
 
 ## 🔄 バージョン管理
 
 ```yaml
-version: 1.1.0
-last_updated: 2026-03-27
+version: 2.0.0
+last_updated: 2026-09-11
 author: usedhonda
 ```
 
@@ -310,4 +345,5 @@ AI systems should always fetch the latest version from GitHub.
 
 > 🎛️ **Summary:**
 > Remix flow transforms the original song's arrangement, tempo, and genre while preserving lyrics and core melody.
-> Use weirdness/style_influence parameters to control the degree of transformation.
+> Pick the route first: your own Suno song can be edited in place, an external track cannot.
+> State what must be preserved, not only what should change.
