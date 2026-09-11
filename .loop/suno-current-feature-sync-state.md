@@ -1,8 +1,8 @@
 # Current Suno feature compatibility state
 
 status: final
-iteration: 2/4
-research_watermark: 2026-09-10
+iteration: 3/4
+research_watermark: 2026-09-11
 
 feature_matrix:
 - feature: Suno V6 release (v6 / v6-wild / v6-mini)
@@ -135,6 +135,75 @@ feature_matrix:
     - suno-cli HTTP client
   decision: reject as a community implementation claim without Tier W evidence;
     do not add authentication or anti-bot behavior.
+- feature: retirement of every pre-v6 model
+  status: official
+  date: 2026-09-09, read 2026-09-11
+  evidence:
+    - https://help.suno.com/en/articles/13924481 (v6 FAQ): "All models prior to v6 have
+      been retired, but your songs will still be in your library and remain unchanged."
+  affected_surfaces:
+    - README.md, skills/suno/SKILL.md, knowledge/yaml_template.md
+    - knowledge/suno_v6_reference.md, knowledge/v55_to_v6_migration.md
+    - suno-cli README, src/create/body.ts, test/create.test.ts
+  decision: implemented. The kit had been telling users v5.5 was a selectable previous
+    generation, which was wrong on every surface including the two canonical V6 files.
+    The alias is kept so an identifier already recorded in a ledger still resolves, and
+    create now warns on stderr; stdout stays pure JSON. Whether Suno still accepts such a
+    request is Suno's call and is not claimed either way.
+- feature: Variety / Max Mode / Simple Mode
+  status: official
+  date: 2026-09-09, read 2026-09-11
+  evidence:
+    - https://help.suno.com/en/articles/13924481 (v6 FAQ), read directly rather than via
+      the research report that surfaced them
+  affected_surfaces:
+    - knowledge/suno_v6_reference.md
+    - suno-cli/src/create/body.ts, src/cli.ts, src/commands/create.ts, README
+  decision: implemented on owner instruction. Max Mode maps onto metadata.is_max_mode,
+    which this repo already sent as a constant, so exposing it changes nothing when the
+    flag is omitted. Variety is sent as metadata.control_sliders.aug_creativity on a 0..1
+    scale -- that wire name is a THIRD-PARTY observation, never reproduced here, and is
+    marked as such in code, CLI README and knowledge. It is deliberately not labelled
+    observed_v6. Verified by dry-run that omitting both flags leaves the body unchanged,
+    so no existing run-id changes hash, and that Variety 0 survives rather than being
+    dropped as falsy.
+- feature: Custom Models on V6
+  status: official
+  date: 2026-09-09, read 2026-09-11
+  evidence:
+    - v6 FAQ: "Any custom models you've created will automatically get upgraded so that
+      v6 powers your model moving forward."
+  affected_surfaces:
+    - knowledge/suno_v6_reference.md (unspecified table corrected)
+    - agent/suno_flow_generate.md, agent/suno_flow_album.md
+  decision: implemented. The unspecified table had grouped Voices / Custom Models / My
+    Taste / Persona as one undocumented block. Custom Models is confirmed; the other
+    three are not. The group was split so the confirmed one is not buried.
+- feature: maximum song length of 8 minutes for the V6 family
+  status: rejected
+  date: 2026-09-11
+  evidence:
+    - claimed by `deep-research-report (8).md`
+    - help.suno.com/en/articles/2409473 returned HTTP 404 on direct fetch, twice
+    - absent from the v6 FAQ, Current Models, and the release notes
+    - the only text seen attributing 8 minutes came from a search summary and assigned
+      it to V4.5 / V5, not to v6
+  affected_surfaces:
+    - knowledge/suno_v6_reference.md ("Maximum song length" row)
+  decision: NOT adopted. Left as unspecified. Recorded here so the next sweep does not
+    re-research it from scratch, and does not adopt it on the report's word alone.
+- feature: consistency gate C6 cannot see filenames containing digits
+  status: observed
+  date: 2026-09-11
+  evidence:
+    - C6 extracts tokens with `knowledge/[a-z_]+\.md`, which cannot match
+      suno_v6_reference.md, v55_to_v6_migration.md or suno_v55_reference.md
+  affected_surfaces:
+    - scripts/check-consistency.sh (NOT modified)
+  decision: reported, not fixed. `maker != checker` forbids editing the frozen checker.
+    A mistyped V6 knowledge path passes the gate silently, so every commit in this sweep
+    also ran a manual resolution check over `knowledge/[a-z0-9_]+\.md`. That compensating
+    check is written into the plan and should stay in use.
 
 iteration_1:
 - Official release notes were read on 2026-08-13 through the current top entries:
@@ -175,8 +244,32 @@ iteration_2:
 - Verification: `bash scripts/check-consistency.sh` GREEN; `cd suno-cli && npm test`
   83/83; `create --dry-run` with no --model returns chirp-hawk and with --model v5.5
   returns chirp-fenix; `git diff --check` clean.
-next_step: none; begin a new sweep only after the next official release-note or
-  independently corroborated community change. The one open thread is the v6-wild
-  request parameter, which needs a captured generate request rather than more
-  research.
+iteration_3:
+- Trigger: the owner supplied `deep-research-report (8).md` and asked for every remaining
+  V5.5 surface to be brought to V6. The report is a secondary source, so each load-bearing
+  claim was checked against the official page it cited before anything was written.
+- That check changed the outcome twice. It confirmed Variety, Max Mode, Simple Mode and
+  the Custom Model upgrade, and it surfaced the model retirement, which the kit had wrong
+  everywhere. It also rejected the 8-minute claim, which no official page supports.
+- Scope covered: agent/ (all six flows, including the reference contract, which pointed at
+  the V5-era master and named no V6 file at all), mygpts/ (both GPTs; version numbers
+  removed from the display names on owner instruction), the skill's default Style path,
+  the knowledge templates, and the master reference.
+- The master reference was rewritten from 1491 lines to 280. It had become a third copy of
+  V5.5 facts; it now states none of its own and cites the knowledge layer instead. It
+  contains no numeric parameters at all, which makes inventing a V6 number structurally
+  impossible and leaves nothing to drift. The V5-era text and its 81 citations are frozen
+  byte-identically at archive/SunoV5_Prompt_MASTER_REFERENCE_v1.5.0.md.
+- Defects fixed in passing: a padding instruction in two files that told the model to fill
+  the Style field (V6 guidance rejects it), a self-contradiction in the analyzer about
+  per-section arrays, a heading naming a file that does not exist, and an unverifiable Suno
+  screen path that now reports and stops instead of forcing its way on.
+- Verification: gate GREEN at every commit; `npm test` 84/84; `npm run build` clean; the
+  no-number invariant checked line by line on the rewritten master; a manual
+  `knowledge/[a-z0-9_]+\.md` resolution check at every step because C6 cannot see those
+  paths; dry-run evidence that the new CLI flags change nothing when omitted.
+next_step: none from this sweep. Open threads, in order of value: the v6-wild request
+  parameter still needs a captured generate request; the `aug_creativity` wire name needs
+  first-party confirmation before it should be trusted; the Suno Create screen path in
+  agent/suno_flow_style_extract.md needs a human to look at the current UI.
 stop_reason: evidence_gap
