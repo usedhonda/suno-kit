@@ -356,5 +356,5 @@ Observed 2026-09-09, single source, not reproduced by this kit.
 | Official | https://help.suno.com/en/articles/13924737 (Current Models) | read 2026-09-11 | Model family and access tiers |
 | Independent | The Verge, first-day hands-on | 2026-09-09 | Known weak points (unverified) |
 
-Last verified against source: **2026-09-10**.
+Last verified against source: **2026-09-11**.
 Re-verify after any Suno model update — V6 is a closed, server-side model and may change silently.
