@@ -104,6 +104,8 @@ Useful optional controls:
 |---|---|
 | `--exclude <text>` | Styles or sounds to avoid |
 | `--model <name>` | Generation model. Defaults to `v6`. Free accounts should pass `v6-mini`. `v5.5` and every earlier model were retired by Suno on 2026-09-09 — the alias still resolves, but Suno decides whether it accepts the request |
+| `--variety <0-100>` | V6 Variety. Suno varies the output by adjusting and updating your style prompt, so pass `0` to keep an engineered Style under direct control. ⚠️ The control is official; the wire field it maps to comes from a third-party observation this repo has not reproduced first-hand |
+| `--max-mode` | V6 Max Mode. Spends more on the generation. Suno recommends it for songs longer than two minutes, covers meant to stay close to the original, style transfer, and keeping vocals and style consistent through the whole track. Costs more credits |
 | `--vocal-gender m|f` | Vocal gender hint |
 | `--weirdness <0-100>` | Suno weirdness slider |
 | `--style-influence <0-100>` | Suno style influence slider |

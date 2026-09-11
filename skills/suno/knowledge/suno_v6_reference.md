@@ -70,9 +70,50 @@ Each row is a capability Suno states for V6, with Suno's own example prompt.
 
 ---
 
+## Generation controls — `confirmed_v6`
+
+Verified against the v6 FAQ on **2026-09-11** [see Sources]. These are not prompt syntax:
+they sit beside the prompt and change what Suno does with it.
+
+| Control | What Suno states |
+|---|---|
+| **Variety** | "The Variety slider is designed to introduce variety in your outputs by adjusting and updating your style prompts." To keep a hand-written Style exactly as written: "If you'd like to retain full control of your style tags, reduce the Variety slider to 0." |
+| **Max Mode** | "an option you can turn on for any generation when you want v6 to spend more on getting it right. It costs more credits and it's best for: songs longer than two minutes, covers where you want the result to stay close to the original, transferring the style of one song onto another, and keeping vocals and style consistent through the whole track." |
+| **Simple Mode** | "In Simple Mode, you don't need to know which tool to reach for (like Cover, Remix, Extend) when creating with v6. The model figures out the workflow if you want it to." |
+
+**Variety changes what reproducibility means.** Above zero, Suno may rewrite the style prompt
+it was given, so *saving the prompt text is no longer enough to reproduce a result*. Record the
+whole recipe — model, mode, every control value, the references used — or record nothing useful.
+
+When you want to judge the prompt itself (A/B tests, benchmarks, a style you engineered
+deliberately), set Variety to zero. Otherwise you cannot tell your change from Suno's.
+
+### Model lifecycle — `confirmed_v6`
+
+- **Every model before v6 is retired**: "All models prior to v6 have been retired, but your songs
+  will still be in your library and remain unchanged." They are not selectable for new work.
+- **Custom Models work on v6**: "Fine-tune v6 on your own tracks for a personalized sound."
+  Existing ones carry over — "Any custom models you've created will automatically get upgraded so
+  that v6 powers your model moving forward. Songs created with your old v5.5 custom model will
+  still be available, playable and unaffected by the v6 update."
+
+### Wire names for these controls — **third-party, not observed here**
+
+A third-party project reports that the web client sends Variety as
+`metadata.control_sliders.aug_creativity` on a 0..1 scale, alongside `metadata.is_max_mode`.
+
+⚠️ **This kit has not reproduced that first-hand**, so it is *not* `observed_v6` — unlike the model
+identifiers below, which were seen directly in a first-party session. `suno-cli` sends these names
+because the owner asked for the controls, and the code says plainly that the names are unverified.
+Re-verify against a live request before trusting them. This is the same standard that keeps
+`v6-wild` without an alias.
+
+---
+
 ## Not stated by Suno — `unspecified`
 
-As of **2026-09-10**, none of the following appear in Suno's V6 blog post or release notes.
+As of **2026-09-11**, none of the following appear in Suno's V6 blog post, release notes,
+Current Models page, or the v6 FAQ — all four were read directly, not summarised from a report.
 **Do not fill these in with guesses, and do not copy them from third-party API wrappers.**
 
 | Item | Status |
@@ -87,7 +128,7 @@ As of **2026-09-10**, none of the following appear in Suno's V6 blog post or rel
 | Duration Slider on V6 | unspecified — the slider shipped 2026-07-20 for **V5.5 / Web only** |
 | Maximum song length | unspecified |
 | Weirdness / Style Influence / Audio Influence semantics on V6 | unspecified — do not assume V5.5 behaviour carries over |
-| Voices / Custom Models / My Taste / Persona compatibility | unspecified for V6 specifically |
+| Voices / My Taste / Persona compatibility | unspecified for V6 specifically — **Custom Models are the exception and are confirmed**, see Generation controls above. Do not treat the four as one group |
 | Output codec / sample rate / bitrate | unspecified |
 | Image / video / audio input limits, formats, counts | unspecified |
 
@@ -311,6 +352,8 @@ Observed 2026-09-09, single source, not reproduced by this kit.
 | Official | https://suno.com/blog/introducing-v6 | 2026-09-09 | Model family, capabilities, official example prompts |
 | Official | https://suno.com/release-notes | 2026-09-09 | Release date, paid-only access |
 | Official | https://suno.com/release-notes | 2026-07-20 | Duration Slider = V5.5 / Web only |
+| Official | https://help.suno.com/en/articles/13924481 (v6 FAQ) | read 2026-09-11 | Variety, Max Mode, Simple Mode, retirement of pre-v6 models, Custom Model upgrade |
+| Official | https://help.suno.com/en/articles/13924737 (Current Models) | read 2026-09-11 | Model family and access tiers |
 | Independent | The Verge, first-day hands-on | 2026-09-09 | Known weak points (unverified) |
 
 Last verified against source: **2026-09-10**.
