@@ -16,7 +16,7 @@ knowledge: 何を作るかを決める
 - **エージェント共用** — Claude Code と Codex の両方に同じスキルを symlink で配る。正本はこのリポジトリ1箇所だけ
 - **knowledge は知識エンジン** — V6 仕様と V5.5 からの移行判断、コミュニティ技法、歌詞設計、ジャンル語彙、YAML テンプレートをスキルが参照する正本
 - **`suno-cli` は実行層** — スキルが作った payload を Suno に投入し、2 take URL / audio を JSON で回収するバックエンド。回収コマンド（status / urls / download）と `--live` gated create submit は出荷済み
-- **プロンプト設計** — Style / Lyrics / Exclude の書き方に加え、V6 の書き方と、V5.5 の音声条件付け / Duration Control / inline tags を統合
+- **プロンプト設計** — Style / Lyrics / Exclude の書き方に加え、V6 の書き方と、V5.5 期の音声条件付け / Duration Control / inline tags の記録を統合
 - **SNS時代スタイル** — ドパガキ Recipe、Phonk / Amapiano / Jersey Club、Hyperpop / UK Garage / Drill、sped-up / Vocaloid を収録（community + Cdx review、未実証は A/B 推奨）
 - **Suno特化オートマスタリング** — Suno の音のクセ（シマー、泥、既圧縮、音量不足）を前提にスキャン → 判定 → 補正
 - **整合ゲート** — `scripts/check-consistency.sh` で README / knowledge / SKILL の決定論チェックを実行
@@ -60,7 +60,7 @@ symlink なので**正本はこのリポジトリ1箇所**だけ。ここを編�
 
 ## Knowledge Engine
 
-`skills/suno/knowledge/` は `/suno` スキルの品質の源泉です。単なる付属マニュアルではなく、歌詞、構成、Style、YAML、そして V6 / V5.5 それぞれの workflow を判断するための参照基盤です。
+`skills/suno/knowledge/` は `/suno` スキルの品質の源泉です。単なる付属マニュアルではなく、歌詞、構成、Style、YAML、そして V6 の workflow を判断するための参照基盤です（V5.5 期の記録も、退役世代の曲を読み解くために保持しています）。
 
 | ファイル | 役割 |
 |---|---|
@@ -174,8 +174,8 @@ symlink なので**正本はこのリポジトリ1箇所**だけ。ここを編�
 
 | GPT | 用途 | セットアップ |
 |-----|------|-------------|
-| **Suno Style Analyzer V5.5** | YouTube URL からスタイル解析 → Style/Exclude/YAML 生成 | [mygpts/style-analyzer/README.md](mygpts/style-analyzer/README.md) |
-| **Suno Lyrics Writer V5.5** | テーマから歌詞生成（ラップ・英語・バイリンガル対応） | [mygpts/lyrics-writer/README.md](mygpts/lyrics-writer/README.md) |
+| **Suno Style Analyzer** | YouTube URL からスタイル解析 → Style/Exclude/YAML 生成 | [mygpts/style-analyzer/README.md](mygpts/style-analyzer/README.md) |
+| **Suno Lyrics Writer** | テーマから歌詞生成（ラップ・英語・バイリンガル対応） | [mygpts/lyrics-writer/README.md](mygpts/lyrics-writer/README.md) |
 
 ## V5.5（退役済み）期の知見
 

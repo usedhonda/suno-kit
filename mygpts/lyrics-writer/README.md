@@ -1,12 +1,15 @@
-# Suno Lyrics Writer V5.5
+# Suno Lyrics Writer
 
-少ない入力から、Suno V5.5 向けの歌いやすい歌詞を生成する Custom GPT セットです。
+少ない入力から、Suno V6 向けの歌いやすい歌詞を生成する Custom GPT セットです。
+
+> 名前にバージョン番号を入れていません。世代が変わるたびに ChatGPT 側の表示名を
+> 直さないといけなくなり、直し忘れるとリポジトリと食い違うためです。
 
 ## できること
 
 - テーマだけで歌詞を生成
 - セクションタグ付きで出力
-- V5.5 アノテーションタグ付きで出力
+- アノテーションタグ付きで出力（V6 でも有効）
 - ひらがな中心の Suno 向けフォーマットへ整形
 - Verse / Chorus / Bridge の役割差を保った構成生成
 
@@ -29,8 +32,8 @@ ChatGPT → `Explore GPTs` → `Create` → `Configure`
 
 | 項目 | 値 |
 |------|----|
-| Name | `Suno Lyrics Writer V5.5` |
-| Description | `Generate singable Suno V5.5 lyrics from a theme or short prompt.` |
+| Name | `Suno Lyrics Writer` |
+| Description | `Generate singable Suno lyrics from a theme or short prompt.` |
 
 ### 3. Instructions
 
@@ -71,7 +74,7 @@ EDM、クラブでおどれる、えいご mix
 ## 出力の特徴
 
 - コードブロックでそのまま貼りやすい
-- `[Verse - intimate, close vocal]` のような V5.5 向けタグ付き
+- `[Verse - intimate, close vocal]` のようなアノテーションタグ付き
 - 伏線、フック、韻、エネルギーカーブを内部ルールで保持
 
 ## 収録知識

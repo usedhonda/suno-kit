@@ -1,6 +1,9 @@
-# Suno Style Analyzer V5.5
+# Suno Style Analyzer
 
-YouTube URL を起点に、Suno V5.5 向けの Style / Exclude / YAML を生成する Custom GPT セットです。
+YouTube URL を起点に、Suno V6 向けの Style / Exclude / YAML を生成する Custom GPT セットです。
+
+> 名前にバージョン番号を入れていません。世代が変わるたびに ChatGPT 側の表示名を
+> 直さないといけなくなり、直し忘れるとリポジトリと食い違うためです。
 
 ## できること
 
@@ -30,8 +33,8 @@ ChatGPT → `Explore GPTs` → `Create` → `Configure`
 
 | 項目 | 値 |
 |------|----|
-| Name | `Suno Style Analyzer V5.5` |
-| Description | `Analyze a reference track and generate Suno V5.5 Style / Exclude / YAML output.` |
+| Name | `Suno Style Analyzer` |
+| Description | `Analyze a reference track and generate Suno Style / Exclude / YAML output.` |
 
 ### 3. Instructions
 
@@ -39,11 +42,13 @@ ChatGPT → `Explore GPTs` → `Create` → `Configure`
 
 ### 4. Knowledge
 
-`skills/suno/knowledge/` フォルダから以下3ファイルをアップロードします。
+`skills/suno/knowledge/` フォルダから以下5ファイルをアップロードします。
 
-1. `skills/suno/knowledge/suno_v55_reference.md`
-2. `skills/suno/knowledge/style_catalog.md`
-3. `skills/suno/knowledge/yaml_template.md`
+1. `skills/suno/knowledge/suno_v6_reference.md`
+2. `skills/suno/knowledge/v55_to_v6_migration.md`
+3. `skills/suno/knowledge/style_catalog.md`
+4. `skills/suno/knowledge/yaml_template.md`
+5. `skills/suno/knowledge/suno_v55_reference.md`（📦 退役世代の記録）
 
 ### 5. Capabilities
 
@@ -86,7 +91,10 @@ https://www.youtube.com/watch?v=xxxxx
   - META+Lyrics の設計図
   - セクションごとのボーカル、キュー、remix_hints を含む
 
-## 収録している V5.5 反映点
+## 🧪 V5.5 由来の設定（V6 未検証）
+
+> V5.5 以前は退役済み。以下は当時有効だった知見で、V6 での挙動は公式に未記載。
+> 出発点として使い、結果を見て調整すること。
 
 - Cover / Sample / Inspo のモード選択
 - Voices 使用時の Style 最小化
@@ -100,8 +108,10 @@ mygpts/style-analyzer/
 ├── README.md
 └── instructions.md
 
-skills/suno/knowledge/      ← 正本（/suno スキル配下）
-├── suno_v55_reference.md   ← アップロード対象
-├── style_catalog.md        ← アップロード対象
-└── yaml_template.md        ← アップロード対象
+skills/suno/knowledge/        ← 正本（/suno スキル配下）
+├── suno_v6_reference.md     ← アップロード対象
+├── v55_to_v6_migration.md   ← アップロード対象
+├── style_catalog.md         ← アップロード対象
+├── yaml_template.md         ← アップロード対象
+└── suno_v55_reference.md    ← アップロード対象（📦 退役世代の記録）
 ```
