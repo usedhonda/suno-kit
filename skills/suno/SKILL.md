@@ -343,7 +343,7 @@ tags: [artist, suno]
 
 - **絶対上限: 5000文字以下**（タグ・アノテーション・歌詞・空行すべて含む。python3 で機械的にカウントする）
 - **アーティストの `出力ルール.文字数`** がある場合はそちらも遵守（例: 1500-2000文字）
-- V5.5 アノテーションタグ: `[Chorus - explosive, full band, powerful vocal]`（英語、2-5語）
+- アノテーションタグ: `[Chorus - explosive, full band, powerful vocal]`（英語、2-5語。V6 でも有効）
 - **日本語モード:** コードブロック内は漢字→ひらがな。コードブロック外は通常の日本語
 - 句読点リズム制御、フォネティック・スペル対応
 
@@ -424,7 +424,7 @@ Phase A の質問5で precision / exploration / fast のどれを狙うか決め
 3. **「イメージに近い音の方向性は？」**
    → テキスト指示、ジャンル名、「〇〇みたいな感じ」等
 4. **「変拍子（5/4, 7/8 等）を狙いますか？」**
-   → Yes なら `knowledge/suno_v55_reference.md` の「Odd Time Signature / 変拍子プロンプト戦略」を必読。シード音源（クリック/ドラムループ）の有無も確認し、Style に連符語彙（quintuplet / septuplet）とアクセント分割（3+2 / 2+2+3 等）を含め、スライダーを Weirdness 25-40 / Style Influence 70-85 に設定する
+   → Yes なら `knowledge/suno_v55_reference.md` の「Odd Time Signature / 変拍子プロンプト戦略」を必読。シード音源（クリック/ドラムループ）の有無も確認し、Style に連符語彙（quintuplet / septuplet）とアクセント分割（3+2 / 2+2+3 等）を含め、スライダーは 🧪 V5.5 由来 / V6 未検証の出発点として Weirdness 25-40 / Style Influence 70-85（V6 ではスライダーの意味そのものが公式未記載。結果を見て調整する）
 
 5. **「V6 を使いますか？ 使うなら精密／探索／高速のどれ？」**
    → 既定は **V6**（現行世代）。どの V6 を使うかを聞く:
@@ -535,9 +535,11 @@ Step 3 は以下の全項目を **この順序で** 出力して初めて完了�
 
 ▼ 次は Style を生成する。スキップ禁止。
 
-**2) Style（英語のみ、V5.5 タグ形式、コアタグ 120文字以内）**
+**2) Style（英語のみ、コアタグ 120文字以内）**
 
-V5.5 準拠のタグ形式で出力する。**プローズ（散文）禁止。**
+✅ V6 既定: **属性どうしの関係を述べる**（どの楽器が主役か、verse と chorus をどう対比させるか）。
+🧪 V5.5 由来 / V6 未検証: 下のタグ形式も引き続き有効。**長さではなく関係の明示**で決まる。
+❓ 公式未記載: V6 の Style 文字数上限。120 / 400 は**キットの目標値**であって Suno の公表値ではない。
 詳細な production 指示は YAML META の `production_notes` と annotation tags に任せる。
 
 フォーマット: `genre, BPM <n>, key, mood, vocal descriptor, 2-3 instruments, mix keyword`
@@ -701,7 +703,10 @@ url = 'https://suno.com/create#suno=' + urllib.parse.quote(data, safe='')
 
 曲が完成した後の処理。ユーザーが WAV ファイルや「Xにアップしたい」と言ったら対応する。
 
-### 4-A. オートマスタリング（Suno V5/V5.5 特化）
+### 4-A. オートマスタリング（Suno V5/V5.5 の出力で実測）
+
+> ⚠️ 以下の周波数・ダイナミクスの数値は **V5/V5.5 の出力を実測して決めたもので、V6 では未検証**。
+> V6 の曲に適用する場合は、数値を鵜呑みにせず**スキャン結果を見て判断**する。
 
 Suno の WAV 出力には共通する音のクセがある。汎用マスタリングではなく、**Suno 出力の特性を前提とした修復的アプローチ**で処理する。
 仕様は ChatGPT × Gemini のクロス議論（2026-04）で策定。
@@ -985,7 +990,7 @@ ffmpeg -loop 1 -i "<cover.png>" -i "<audio.wav>" \
   -metadata album="<アルバム名（あれば）>" \
   -metadata genre="<ジャンル>" \
   -metadata date="<YYYY>" \
-  -metadata comment="Made with Suno <使用モデル: V5.5 / V6 等>" \
+  -metadata comment="Made with Suno <使用モデル: V6 / v6-wild / v6-mini 等>" \
   -shortest -movflags +faststart \
   "<output.mp4>"
 ```
@@ -1011,7 +1016,7 @@ ffmpeg -loop 1 -i "<cover.png>" -i "<audio.wav>" \
 ## Cover / Sample / Inspo 対応
 
 - スライダー安全範囲: **15-85**
-- Audio Influence: 25%開始、+5%刻み、75%超えない
+- 🧪 V5.5 由来 / V6 未検証: Audio Influence は 25%開始、+5%刻み、75%超えない
 - Voices使用時: Style から声・楽器記述を最小化
 
 ### V6 を使っている場合の修正手段
@@ -1027,7 +1032,10 @@ Keep the lead-vocal melody, lyrics, tempo, key, bass line and all other sections
 
 守りたいものを明示的に列挙するほど事故が減る。詳細は `knowledge/suno_v6_reference.md`。
 
-### V5.5 テクニック
+### 🧪 V5.5 レガシー: 旧世代のテクニック（V6 未検証）
+
+> V5.5 以前は退役済み。以下は**当時有効だった知見**で、V6 での挙動は公式に未記載・本キットでも未再現。
+> 削除はしないが、V6 では出発点として扱う。判定根拠: `knowledge/v55_to_v6_migration.md`
 
 - パフォーマンスディレクション（Verse:/Chorus: で歌い方記述）
 - `[studio recording]` タグ（ライブ感抑制）
