@@ -74,7 +74,9 @@ symlink なので**正本はこのリポジトリ1箇所**だけ。ここを編�
 | `v55_to_v6_migration.md` | V5.5 の各ルールの keep / modify / demote / retire 判定 |
 | `yaml_template.md` | YAML + Style + Exclude 出力テンプレート |
 
-中核資料として [SunoV5_Prompt_MASTER_REFERENCE.md](SunoV5_Prompt_MASTER_REFERENCE.md) も収録しています。これは V5/V5.5 のプロンプト設計、Double-Layer 構造、コミュニティ発見テクニック、Deep Research 統合ログをまとめた参照文書です。
+中核資料として [SunoV5_Prompt_MASTER_REFERENCE.md](SunoV5_Prompt_MASTER_REFERENCE.md) も収録しています。これは V6 世代の**読み方・考え方**をまとめた文書で、事実と数値は knowledge 側を引用する構成です（数値をここに二重化しないため、本文に数値パラメータは出てきません）。V5/V5.5 期の記述と当時の出典は [archive/](archive/) に凍結保存しました。
+
+> ファイル名に `V5` が残っているのは意図的です。整合ゲートがこのファイル名を走査リストにハードコードしており、改名するとゲートは GREEN のまま検査対象から静かに外れます。
 
 ## Execution Layer
 
@@ -212,7 +214,8 @@ suno-kit/
 ├── README.md
 ├── LICENSE
 ├── AGENTS.md / CLAUDE.md               # 共有指示レイヤー（公開前提）
-├── SunoV5_Prompt_MASTER_REFERENCE.md   # 中核マニュアル（15テクニック+81引用）
+├── SunoV5_Prompt_MASTER_REFERENCE.md   # 中核マニュアル（V6 世代・knowledge への導線）
+├── archive/                            # 旧世代の凍結アーカイブ（V5/V5.5 期の記述と出典）
 ├── .github/workflows/publish.yml       # タグ push で suno-cli を npm 公開
 ├── .loop/                              # 自動ループの状態ファイル
 ├── agent/                              # 用途別フロー
