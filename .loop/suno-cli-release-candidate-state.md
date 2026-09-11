@@ -1,11 +1,11 @@
 # suno-cli release candidate state
 
 status: final
-iteration: 2/4
+iteration: 3/4
 published_version: 0.3.0
 published_tag: v0.3.0
 candidate_version: 0.4.0
-candidate_commit: 085e23e
+candidate_commit: bf30ad6
 baseline:
 - Registry query on 2026-08-12 returned `@usedhonda/suno-cli` latest `0.3.0`.
 - `0.3.1` was prepared but never tagged or published, so `0.3.0` is still the
@@ -39,11 +39,32 @@ iteration_2:
   remains a documented explicit diagnostic. No runtime state, credentials,
   `node_modules`, local overrides, or test files are in the artifact.
 - Not performed: tag creation, npm publish, live create, browser mint.
+iteration_3:
+- Why this supersedes iteration 2: the 2026-09-11 V6 sweep changed the CLI again after
+  `085e23e`. Tagging that commit today would publish a build that still calls v5.5 "the
+  previous generation", emits no retirement warning, and has neither `--variety` nor
+  `--max-mode`. Its test is even named "keeps v5.5 as the default".
+- This is the same failure the iteration-2 entry retracted for `ff4416b`. A release
+  handoff goes stale every time the CLI moves, so it has to be re-pointed in the same
+  sweep that moves it — not noticed later.
+- Version decision: still `0.4.0`, no further bump. Nothing between `0.3.0` and now has
+  been published, so the new flags fold into the same unreleased version. `0.4.0` already
+  signalled the behaviour change that matters to an upgrader: `create` with unchanged
+  arguments resolves to a different model.
+- Candidate change: `bf30ad6`.
+- Verification on the candidate: `bash scripts/check-consistency.sh` GREEN; `npm run
+  build` clean; `npm test` 84/84; dry-run confirms that omitting `--variety` and
+  `--max-mode` leaves the request body unchanged, so no recorded run-id changes hash.
+- Carried caveat for the release notes: `--variety` maps onto a wire field name observed
+  by a third party and never reproduced here. It is marked as such in the code, the CLI
+  README and the knowledge canon. Anyone cutting this release should know that one flag
+  rests on weaker evidence than the rest.
 release_handoff:
 - Candidate version: `0.4.0`
-- Candidate commit: `085e23e`
-- Supersedes the iteration-1 handoff, which named `ff4416b` / `v0.3.1`. That
-  instruction is retracted: acting on it would ship a pre-V6 build.
+- Candidate commit: `bf30ad6`
+- Supersedes the iteration-2 handoff, which named `085e23e`. That instruction is
+  retracted for the same reason the iteration-1 one was: acting on it would ship a build
+  that predates the V6 work.
 - Human-only action after review: create an annotated tag `v0.4.0` at the candidate
   commit, then push that tag. The existing trusted tag workflow performs npm
   publication; do not invoke `npm publish` directly.
