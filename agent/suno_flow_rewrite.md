@@ -10,8 +10,8 @@ output_format: "yaml+lyrics"
 # 🎧 Suno リライトフロー仕様書（suno_flow_rewrite.md）
 
 ## 🧭 概要
-この仕様書は、既存の楽曲をSuno V5/V5.5で再解釈・リライトするためのエージェント実行フローを定義する。
-ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込み、
+この仕様書は、既存の楽曲を Suno V6 で再解釈・リライトするためのエージェント実行フローを定義する。
+ChatGPTは本仕様書および `skills/suno/knowledge/suno_v6_reference.md` / `v55_to_v6_migration.md` を読み込み、
 元曲のコンセプトを維持しつつ新しい解釈でYAML形式プロンプトを生成する。
 
 ---
@@ -20,12 +20,12 @@ ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込
 リライトプロンプトは以下の情報を含む：
 
 ```yaml
-# === Suno V5/V5.5 Rewrite Prompt ===
+# === Suno V6 Rewrite Prompt ===
 meta:
   original_reference: [元曲のURL・タイトル・アーティスト]
   rewrite_direction: [どう変えるか: ジャンルシフト/テンポ変更/雰囲気転換]
-  # V5.5: style is short comma-separated tags, not prose
-  style: [短いタグをカンマ区切り: "smooth jazz, 90 BPM, warm, nostalgic"]
+  # V6: 属性どうしの関係を述べる。短いタグ列も引き続き有効
+  style: [例: "smooth jazz at 90 BPM, warm nostalgic Rhodes carrying the verse, upright bass walking underneath"]
   language: [言語維持 or 変更]
   keywords: [再解釈のキーワード]
 
@@ -40,7 +40,7 @@ lyrics:
   approach: "keep_theme"  # テーマ維持 / 歌詞も変更
   structure: [元曲の構造を踏襲 or 変更]
   content: |
-    # V5.5: Use annotation tags for section-level production hints
+    # アノテーションタグでセクション単位の演出を指示する（V6 でも有効）
     [VERSE - intimate, acoustic feel]
     リライトされた歌詞
     元のメッセージを保ちつつ新しい表現
@@ -65,8 +65,14 @@ lyrics:
 - **雰囲気転換**: Dark → Bright, Serious → Playful等
 - **言語変更**: 日本語 → 英語（この場合は translate.md も参照）
 
+> ✅ V6 確認済み: **元曲が自分の Suno 曲なら、作り直さずに「局所編集」で済むことがある。**
+> その場合は「どこを変えるか」だけでなく **「何を保つか」を明示**する。
+> 名前を挙げなかったものが保持されることこそ、この機能の価値だから。
+> 外部の曲を参照したリライトには局所編集を使えないので、通常生成としてこのフローを続ける。
+> 根拠: `skills/suno/knowledge/v55_to_v6_migration.md` §3
+
 ### 3️⃣ 新解釈プロンプト生成
-- `SunoV5_Prompt_MASTER_REFERENCE.md` のルールに従う
+- `skills/suno/knowledge/suno_v6_reference.md` のルールに従う
 - 元曲の魅力を残しつつ新しい方向性を明確化
 - Production Quality Tags（sonic adjectives）を活用
 
@@ -112,7 +118,7 @@ rewrite: "Intimate acoustic storytelling"
 ### 推奨事項
 - 元曲のキーフレーズを1-2箇所残す（アンカーリング）
 - Production Quality Tagsで質感の違いを明確化
-- Remix Hints（weirdness/style_influence）で変化度を調整
+- 🧪 V5.5 由来 / V6 未検証: Remix Hints（weirdness / style_influence）での変化度調整 → 末尾のレガシー節を参照
 
 ---
 
@@ -130,7 +136,7 @@ rewrite: "Intimate acoustic storytelling"
 ## 📝 出力例
 
 ```yaml
-# === Suno V5 Rewrite: 夜空ノムコウ → Jazz Interpretation ===
+# === Suno V6 Rewrite: 夜空ノムコウ → Jazz Interpretation ===
 meta:
   original_reference: "SMAP - 夜空ノムコウ (1998)"
   rewrite_direction: "J-Pop ballad → Smooth Jazz with string arrangement"
@@ -160,24 +166,37 @@ lyrics:
 
 ---
 
-## 🆕 V5.5 Notes
+## 🆕 V6 Notes
 
-### Style Format
-- V5.5ではStyleを短いカンマ区切りタグで記述（散文禁止）
-- 例: `smooth jazz, 90 BPM, warm, nostalgic, Rhodes piano, upright bass`
-- 4-7タグが最適
+### Style の書き方
+- ✅ V6 確認済み: V6 は vocals / instrumentation / structure / mood / references / feel を以前より深く解釈する
+- 既定は**属性どうしの関係を述べる**書き方（verse と chorus の対比、どの楽器が主役を担うか等）
+- 🧪 V5.5 由来 / V6 未検証: 短いカンマ区切りタグ列（4-7タグ）も引き続き有効。**長さではなく関係の明示**で決まる
+- ❓ 公式未記載: V6 の Style 文字数上限。推測値を書かない
 
 ### Annotation Tags
 - セクションヘッダに制作ヒントを付加: `[VERSE - intimate, close vocal]`
 - コマンドテキストはタグ外に書くと歌われるので注意
+- 各セクション 2-3 要素に絞る。細かく積み上げるより、生成後の局所編集のほうが確実
+
+---
+
+## 🧪 V5.5 レガシー: スライダー調整（V6 未検証）
+
+> 以下は **V5.5 で有効だった知見**。V6 での挙動は公式に未記載で、本キットでも未再現。
+> 削除はしないが、V6 では**出発点**として使い、結果を見て調整する。A/B の片側としてのみ扱う。
+> 判定根拠: `skills/suno/knowledge/v55_to_v6_migration.md` §10
+
+- Remix Hints（weirdness / style_influence）で変化度を調整するのは V5.5 期の運用
+- ❓ 公式未記載: V6 におけるスライダーの意味そのもの。Weirdness を temperature と同一視しない
 
 ---
 
 ## 🔄 バージョン管理
 
 ```yaml
-version: 1.1.0
-last_updated: 2026-03-27
+version: 2.0.0
+last_updated: 2026-09-11
 author: usedhonda
 ```
 
@@ -187,4 +206,4 @@ AI systems should always fetch the latest version from GitHub.
 
 > 🎵 **Summary:**
 > Rewrite flow maintains the essence of the original song while transforming its genre, tempo, or mood.
-> Always reference the master manual for Suno V5 syntax and production quality tags.
+> Always reference skills/suno/knowledge/suno_v6_reference.md for current syntax and production quality tags.
