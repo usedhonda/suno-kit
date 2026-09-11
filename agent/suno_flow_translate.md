@@ -10,9 +10,12 @@ output_format: "yaml+lyrics"
 # 🎧 Suno 翻訳フロー仕様書（suno_flow_translate.md）
 
 ## 🧭 概要
-この仕様書は、楽曲の歌詞を他言語に翻訳し、Suno V5/V5.5で歌唱可能な形式に最適化するエージェント実行フローを定義する。
-ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込み、
+この仕様書は、楽曲の歌詞を他言語に翻訳し、Suno V6 で歌唱可能な形式に最適化するエージェント実行フローを定義する。
+ChatGPTは本仕様書および `skills/suno/knowledge/suno_v6_reference.md` / `v55_to_v6_migration.md` を読み込み、
 **音節数・リズム・韻を維持した翻訳**を生成する。
+
+> 本フローの中身（音節マッチング・韻の保持・歌いやすさ）は**モデル世代に依存しない技芸**で、V6 でもそのまま通用する。
+> V5.5 期の詳細は `suno_v55_reference.md`、V5 期の網羅資料は `SunoV5_Prompt_MASTER_REFERENCE.md`（いずれも退役世代の記録）。
 
 ---
 
@@ -20,7 +23,7 @@ ChatGPTは本仕様書および `SunoV5_Prompt_MASTER_REFERENCE.md` を読み込
 翻訳プロンプトは以下の情報を含む：
 
 ```yaml
-# === Suno V5 Translation Prompt ===
+# === Suno V6 Translation Prompt ===
 meta:
   original_language: [元言語]
   target_language: [翻訳先言語]
@@ -185,7 +188,7 @@ approach:
 1. ユーザーが「この曲を英語に翻訳して」と依頼
 2. ChatGPTが元歌詞を取得・分析
 3. 音節数・韻・リズムパターンを抽出
-4. 本仕様書 + マスターリファレンスを読み込み
+4. 本仕様書 + V6 ナレッジ（`suno_v6_reference.md` / `v55_to_v6_migration.md`）を読み込み
 5. 翻訳方針をユーザーに確認（必要に応じて）
 6. 音節マッチングした翻訳を生成
 7. YAML + Lyrics形式で出力
@@ -196,7 +199,7 @@ approach:
 ## 📝 出力例
 
 ```yaml
-# === Suno V5 Translation: 夜空ノムコウ → English Version ===
+# === Suno V6 Translation: 夜空ノムコウ → English Version ===
 meta:
   original_language: "Japanese"
   target_language: "English"
@@ -246,8 +249,8 @@ lyrics:
 ## 🔄 バージョン管理
 
 ```yaml
-version: 1.0.1
-last_updated: 2026-03-27
+version: 2.0.0
+last_updated: 2026-09-11
 author: usedhonda
 ```
 
