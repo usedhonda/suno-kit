@@ -41,6 +41,8 @@ interface ParsedArgs {
   captchaToken?: string | undefined;
   tokenProvider?: string | number | undefined;
   weirdness?: number | undefined;
+  variety?: number | undefined;
+  maxMode?: boolean | undefined;
   styleInfluence?: number | undefined;
   personaId?: string | undefined;
   coverClipId?: string | undefined;
@@ -148,6 +150,8 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   if (args.captchaToken) Object.assign(createOptions, { token: args.captchaToken });
   if (args.tokenProvider !== undefined) Object.assign(createOptions, { tokenProvider: args.tokenProvider });
   if (args.weirdness !== undefined) Object.assign(createOptions, { weirdness: args.weirdness });
+  if (args.variety !== undefined) Object.assign(createOptions, { variety: args.variety });
+  if (args.maxMode !== undefined) Object.assign(createOptions, { maxMode: args.maxMode });
   if (args.styleInfluence !== undefined) Object.assign(createOptions, { styleInfluence: args.styleInfluence });
   if (args.personaId) Object.assign(createOptions, { personaId: args.personaId });
   if (args.coverClipId) Object.assign(createOptions, { coverClipId: args.coverClipId });
@@ -271,6 +275,11 @@ function parseArgs(argv: string[]): ParsedArgs {
     } else if (arg === "--token-provider") {
       result.tokenProvider = parseTokenProviderFlag(argv[index + 1]);
       index += 1;
+    } else if (arg === "--variety") {
+      result.variety = parsePercentFlag("--variety", argv[index + 1]);
+      index += 1;
+    } else if (arg === "--max-mode") {
+      result.maxMode = true;
     } else if (arg === "--weirdness") {
       result.weirdness = parsePercentFlag("--weirdness", argv[index + 1]);
       index += 1;
@@ -335,7 +344,7 @@ function usage(): void {
       "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",
-      "advanced create: [--exclude <text>] [--model <name>] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]",
+      "advanced create: [--exclude <text>] [--model <name>] [--variety 0-100] [--max-mode] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]",
       "advanced auth/live: [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--captcha-token <token> --token-provider <integer>] [--cdp-endpoint <loopback-url>]"
     ]
   });

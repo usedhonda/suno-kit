@@ -38,6 +38,24 @@ test("buildCreateBody maps R6 create fields", () => {
   assert(!("control_sliders" in metadata));
 });
 
+test("buildCreateBody carries variety and max mode only when asked", () => {
+  const base = { title: "controls probe", style: "lo-fi piano", transactionUuid: "tx-controls" };
+  // Omitting both must leave the body byte-identical to what it has always been, or
+  // every existing run-id would hash differently.
+  const untouched = buildCreateBody({ ...base }).metadata as Record<string, unknown>;
+  assert.equal(untouched.is_max_mode, false);
+  assert(!("control_sliders" in untouched));
+
+  const tuned = buildCreateBody({ ...base, variety: 0, maxMode: true }).metadata as Record<string, unknown>;
+  assert.equal(tuned.is_max_mode, true);
+  // Variety 0 is the documented way to keep an engineered style prompt under direct
+  // control, so it has to survive as 0 rather than be dropped as falsy.
+  assert.deepEqual(tuned.control_sliders, { aug_creativity: 0 });
+
+  const scaled = buildCreateBody({ ...base, variety: 50 }).metadata as Record<string, unknown>;
+  assert.deepEqual(scaled.control_sliders, { aug_creativity: 0.5 });
+});
+
 test("buildCreateBody resolves model aliases and defaults to v6", () => {
   const base = { title: "model probe", style: "lo-fi piano", transactionUuid: "tx-model" };
   // V6 is the current generation, so it is the default. v5.5 was retired on 2026-09-09;

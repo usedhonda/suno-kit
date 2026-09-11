@@ -13,6 +13,8 @@ export interface CreateInput {
   tokenProvider?: string | number | null;
   weirdness?: number;
   styleInfluence?: number;
+  variety?: number;
+  maxMode?: boolean;
   personaId?: string;
   coverClipId?: string;
   coverStartS?: number;
@@ -89,7 +91,12 @@ export function buildCreateBody(input: CreateInput): CreateBody {
   const transactionUuid = input.transactionUuid ?? randomUUID();
   const metadata: Record<string, unknown> = {
     create_mode: "custom",
-    is_max_mode: false,
+    // Suno documents Max Mode as spending more on a generation, and recommends it for
+    // longer songs, covers meant to stay close to the original, style transfer, and
+    // whole-track vocal/style consistency. It costs more credits. Omitting the flag
+    // keeps the field exactly as it has always been sent, so the request hash of an
+    // existing run does not move.
+    is_max_mode: input.maxMode ?? false,
     is_mumble: false,
     disable_volume_normalization: false,
     web_client_pathname: "/create"
@@ -102,6 +109,14 @@ export function buildCreateBody(input: CreateInput): CreateBody {
   if (input.weirdness !== undefined) controlSliders.weirdness_constraint = input.weirdness;
   if (input.styleInfluence !== undefined) controlSliders.style_weight = input.styleInfluence;
   if (input.audioInfluence !== undefined) controlSliders.audio_weight = input.audioInfluence;
+  // Variety itself is documented: Suno says it varies output by adjusting and updating
+  // the style prompt, and that lowering it to zero retains full control of the style
+  // tags. The WIRE NAME below is not. `aug_creativity`, and its 0..1 scale, come from a
+  // third-party observation of the web client -- this repo has never seen it first-hand,
+  // unlike the model identifiers it records. Re-verify against a live request before
+  // relying on it, and treat a rejected create with --variety as this line's fault
+  // first. The same caution is why no v6-wild alias exists.
+  if (input.variety !== undefined) controlSliders.aug_creativity = input.variety / 100;
   if (Object.keys(controlSliders).length > 0) metadata.control_sliders = controlSliders;
   const body: CreateBody = {
     tags: input.style,

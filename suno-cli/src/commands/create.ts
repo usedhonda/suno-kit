@@ -99,6 +99,8 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
   if (completedOptions.tokenProvider !== undefined) bodyInput.tokenProvider = completedOptions.tokenProvider;
   if (completedOptions.weirdness !== undefined) bodyInput.weirdness = completedOptions.weirdness;
   if (completedOptions.styleInfluence !== undefined) bodyInput.styleInfluence = completedOptions.styleInfluence;
+  if (completedOptions.variety !== undefined) bodyInput.variety = completedOptions.variety;
+  if (completedOptions.maxMode !== undefined) bodyInput.maxMode = completedOptions.maxMode;
   if (completedOptions.personaId) bodyInput.personaId = completedOptions.personaId;
   if (completedOptions.coverClipId) bodyInput.coverClipId = completedOptions.coverClipId;
   if (completedOptions.coverStartS !== undefined) bodyInput.coverStartS = completedOptions.coverStartS;
