@@ -1,4 +1,4 @@
-# Suno V5.5 Style Catalog
+# Suno Style Catalog
 
 ## Genre Templates (Style Block Examples)
 

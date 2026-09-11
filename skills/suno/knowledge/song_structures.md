@@ -1,4 +1,4 @@
-# Song Structures & Section Guide for Suno V5.5
+# Song Structures & Section Guide for Suno
 
 ## Structure Patterns
 

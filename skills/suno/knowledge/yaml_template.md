@@ -1,4 +1,4 @@
-# Output Templates for Suno Style Analyzer V5.5
+# Output Templates for Suno Style Analyzer
 
 This file contains the exact output templates. The GPT must follow these structures precisely.
 
@@ -51,7 +51,7 @@ notes:
 
 ### V6 用の任意フィールド
 
-V6 を使う場合のみ追加する。**すべて任意** — V5.5 のフローは何も変わらない。
+**すべて任意** — 書かなくても既存のフローは何も変わらない。
 詳細は `suno_v6_reference.md`。
 
 | フィールド | 用途 | 例 |
@@ -63,7 +63,7 @@ V6 を使う場合のみ追加する。**すべて任意** — V5.5 のフロー
 | `references` | 参照素材と**その役割**（素材名だけでは足りない） | `[{ source: "A", role: "vocal phrasing only" }]` |
 
 ```yaml
-# V6 を使う場合の追加例（V5.5 では書かない）
+# 任意フィールドの記入例
 model_intent: exploration
 vibe_scene: "last train home after deciding not to send the message"
 must_preserve: ["lead vocal melody", "tempo", "key"]
@@ -106,8 +106,11 @@ If YAML block exceeds 4500 characters, reduce META only (NEVER touch lyrics):
 
 ## Style Template
 
-**V5.5 準拠: タグ形式、4-7 descriptors、120文字以内。**
-**プローズ（散文）禁止。短いカンマ区切りの名詞句で書く。**
+**✅ V6 既定: 属性どうしの関係を述べる。** どの楽器が主役か、verse と chorus をどう対比させるか。
+**❓ 公式未記載: V6 の Style 文字数上限。** 以下の数値は**キットの目標値**であって Suno の公表値ではない。
+
+**🧪 V5.5 由来 / V6 未検証: タグ形式、4-7 descriptors、120文字以内。**
+**短いカンマ区切りの名詞句で書く形式も引き続き有効。**
 **100% English. Zero Japanese.**
 **Front-load: genre → BPM → key → mood → vocal → instruments → mix の順。**
 **Max genres: 2 genre pairs（3+ は不安定）。**
@@ -125,7 +128,8 @@ If YAML block exceeds 4500 characters, reduce META only (NEVER touch lyrics):
 
 ### Performance Direction（Style 内に追加、任意）
 
-V5.5 はセクション別の演出を Style 内のロールラベルで制御できる。
+🧪 V5.5 由来 / V6 未検証: セクション別の演出を Style 内のロールラベルで制御する書き方。
+V6 では「どのセクションで何がどう変わるか」を関係として述べる文に吸収できる。
 annotation tag への長文よりこちらが効果が高い。
 
 **Format**: Style タグの後に改行して `<Section>: <2-3 descriptors>` を追加
@@ -217,7 +221,12 @@ Trap, Dubstep, distorted guitars, EDM supersaws, female humming
 
 ---
 
-## Remix Hints Recommended Values
+## 🧪 V5.5 レガシー: Remix Hints Recommended Values（V6 未検証）
+
+> 以下は **V5.5 で有効だった数値**。V6 ではスライダーの意味そのものが公式に未記載で、本キットでも未再現。
+> 削除はしないが、V6 では**出発点**として使い、結果を見て調整する。A/B の片側としてのみ扱う。
+> Weirdness は Suno の creative control であって、公開されたサンプリング温度ではない。
+> 判定根拠: `v55_to_v6_migration.md` §10
 
 | Section | Weirdness | Style Influence | Audio Influence (Cover/Sample) |
 |---------|-----------|-----------------|-------------------------------|
