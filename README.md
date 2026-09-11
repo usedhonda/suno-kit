@@ -50,7 +50,7 @@ bash scripts/install-skill.sh
 ```
 
 これだけです。インストール済みの agent（`~/.claude/skills/` と `~/.codex/skills/`）**すべてに**、
-このリポジトリの `skills/suno/` を symlink します。入っていない agent は黙って読み飛ばします。
+このリポジトリの `skills/suno/` を symlink します。入っていない agent は `SKIP` と表示してスキップします。
 
 symlink なので**正本はこのリポジトリ1箇所**だけ。ここを編集すれば両方の agent に即反映され、
 コピーし直す手順は要りません。
@@ -217,6 +217,7 @@ suno-kit/
 │   └── lyrics-writer/
 ├── scripts/
 │   ├── check-consistency.sh            # README / knowledge / SKILL 整合ゲート
+│   ├── install-skill.sh                # CC / Cdx 両方へ skills/suno を symlink
 │   └── suno-autofill.user.js           # Tampermonkey（Suno自動入力）
 └── skills/
     └── suno/                           # /suno スキル（自己完結型・正本）
