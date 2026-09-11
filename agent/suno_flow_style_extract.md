@@ -7,15 +7,19 @@ legacy: "../SunoV5_Prompt_MASTER_REFERENCE.md"
 output_format: "style_block"
 ---
 
-# 🎛️ Suno Style Extraction Flow（suno_flow_style_extract_search.md）
+# 🎛️ Suno Style Extraction Flow（suno_flow_style_extract.md）
 
 ## 🧭 概要
 ユーザーがYouTube URL、アーティスト＋曲名、または曲名のみを指定した場合、
-自動で楽曲を特定・解析し、Suno V5/V5.5 Createページに貼り付け可能な短いStyleブロックを生成する。
-出力は1000字以内、`SunoV5_Prompt_MASTER_REFERENCE.md`に準拠。
+自動で楽曲を特定・解析し、Suno V6 の Create ページに貼り付け可能な Style ブロックを生成する。
+`skills/suno/knowledge/suno_v6_reference.md` / `v55_to_v6_migration.md` に準拠する。
 
-> **V5.5 Style Format**: Styleブロックは短いカンマ区切りの名詞句タグで構成する（散文禁止）。
-> 各タグは1-3語。4-7タグが最適。
+> **このフローは散文形式の Style を出す。** キット正本（コアタグ 120文字 / Style 全体 400文字）とは
+> 意図的に別の規格を使っている。V6 は属性どうしの**関係**を解釈するので、
+> 下の `Detailed instrumentation: / Production: / ...` ブロックはその関係記述にあたる。
+>
+> - 🧪 V5.5 由来 / V6 未検証: 短いカンマ区切りタグ列（1-3語、4-7タグ）も引き続き有効
+> - ❓ 公式未記載: V6 の Style 文字数上限。以下に出てくる 1000 は **Suno UI のハード上限**（V5.5 期に観測）
 
 ---
 
@@ -35,7 +39,8 @@ output_format: "style_block"
 　- Sunoマニュアル定義に従い以下を含む：
 　　ジャンル／BPM／ムード／楽器構成／地域・年代／Key。
 　- 英数字・半角・英語で表現。
-　- **最大1000文字まで記述可能**なので、十分な情報を含める：
+　- Suno UI の上限は 1000文字（🧪 V5.5 期に観測、V6 の上限は公式未記載）。
+　　**埋めること自体は目的ではない。**関係が明示できていれば短くてよい。必要に応じて以下を含める：
 　　・詳細な楽器構成（主要楽器、リズムセクション、メロディー楽器）
 　　・具体的な音響特徴（リバーブ、EQ特性、ミックスバランス等）
 　　・演奏スタイル（ストローク、アーティキュレーション等）
@@ -58,9 +63,10 @@ output_format: "style_block"
 - **Style欄**: Sunoのメイン入力欄（常に表示されている）
 - **Exclude Style欄**: Advanced Optionsを展開した後に現れる独立した入力欄
 
-### Style欄（最大1000文字）- メイン入力欄
+### Style欄（Suno UI 上限 1000文字）- メイン入力欄
 
-**V5.5形式**: 短いカンマ区切りタグ（名詞句）で構成する。散文や長文は避ける。
+**V6**: 属性どうしの**関係**を述べる。長さではなく関係の明示で決まる。
+🧪 V5.5 由来 / V6 未検証: 短いカンマ区切りタグ列（名詞句）も引き続き有効。
 ```
 <Genre>, <Subgenre>, <BPM>, <Mood>, <Key>, <主要楽器1>, <主要楽器2>, <Era/Region>, <音響特徴>, <演奏スタイル>
 ```
@@ -77,13 +83,13 @@ Sound texture: <サウンドテクスチャ、空間感>
 
 ### Exclude Style欄（Advanced Options内の独立した入力欄、カンマ区切り）
 
-**V5.5ベストプラクティス**: 2-5項目に絞る。多すぎると効果が薄れる。Style欄に "no X" と書くのではなく、ここに記載する。
+**2-5項目に絞る。** 多すぎると効果が薄れる。Style欄に "no X" と書くのではなく、ここに記載する。
 ```
 <除外要素1>, <除外要素2>, <除外要素3>
 ```
 ⚠️ **重要**:
-- Advanced Optionsボタンをクリックして展開する
-- 展開後に現れる**独立した「Exclude Style」入力欄**に記入
+- Exclude Style 欄を探す（🧪 V5.5 期の観測では Advanced Options を展開した中にあった）
+- **UI が変わっていて見つからない場合は、報告して止まる。**強引に進めない
 - Style欄には絶対に含めない
 
 ---
@@ -133,10 +139,10 @@ EDM synths, trap hats, distorted guitars, aggressive bass, autotune, dubstep wob
    - **Style欄のみ**に生成したStyleブロックを入力（最大1000文字まで記述可能）
    - ⚠️ **絶対禁止**: Exclude要素をStyle欄に含めない（独立した入力欄です）
 
-   **Step 2: Advanced Optionsの展開**
-   - **必ずAdvanced Optionsボタンをクリック**して展開する
-   - 展開後、その中から**Exclude Style欄**を探す
-   - ⚠️ **重要**: Advanced Optionsを開かないとExclude Style欄は見えません
+   **Step 2: Exclude Style 欄を見つける**
+   - 🧪 V5.5 期の観測: Advanced Options ボタンを展開した中に **Exclude Style 欄**がある
+   - ⚠️ **この手順は Suno の UI 変更で失効しうる。** 見つからなければ**報告して停止**する。
+     Exclude を Style 欄に流し込むような代替は取らない
 
    **Step 3: Exclude Style欄への入力**
    - 展開したAdvanced Options内の**Exclude Style欄のみ**に除外要素を入力
@@ -153,12 +159,12 @@ EDM synths, trap hats, distorted guitars, aggressive bass, autotune, dubstep wob
 - ❌ 「これをコピーしてSunoに貼り付けてください」と指示して終わる
 - ❌ Suno入力を「次のステップ」として先延ばしにする
 - ❌ **【最重要】Exclude要素をStyle欄に混ぜて記述する**（Style欄とExclude欄は完全に独立した別の入力欄）
-- ❌ **Advanced Optionsを展開せずにExclude欄を探す**（必ず展開すること）
+- ❌ **Exclude欄が見つからないまま強引に進める**（見つからなければ報告して停止）
 - ❌ **Exclude Styleを箇条書きや改行で記述**（必ずカンマ区切りの1行）
 - ❌ Exclude Style欄を空のまま放置（必ず適切な除外要素を入力）
 - ❌ **「Create」ボタンを押してしまう**（入力のみで停止すること）
 - ❌ 情報源を報告しない（透明性の欠如）
-- ❌ Style欄を簡潔にしすぎる（1000文字まで使って十分な情報を含める）
+- ❌ 文字数を埋めるためだけに Style を水増しする（長さではなく関係の明示で決まる）
 
 ### 正しい動作
 - ✅ 情報収集→Styleブロック生成→**即座にSuno入力（Style + Exclude両方を別々の欄に）**を一連の流れで実行
@@ -175,7 +181,7 @@ EDM synths, trap hats, distorted guitars, aggressive bass, autotune, dubstep wob
 Suno入力完了後、必ず以下の形式で報告すること：
 
 ```
-✅ Suno V5 への入力が完了しました
+✅ Suno への入力が完了しました
 
 【入力内容】
 ✓ Style欄（メイン入力欄）: [生成したStyleブロック]
@@ -184,8 +190,8 @@ Suno入力完了後、必ず以下の形式で報告すること：
 【入力手順】
 1. Suno.com Createページを開きました
 2. Style欄に上記Styleブロックを入力しました
-3. Advanced Optionsボタンをクリックして展開しました
-4. 展開後に現れたExclude Style欄に上記Excludeブロックを入力しました
+3. Exclude Style 欄を開きました
+4. Exclude Style欄に上記Excludeブロックを入力しました
 
 【使用した情報源】
 - [サイト名1]: [URL] - [取得した情報]
@@ -204,6 +210,6 @@ Suno入力完了後、必ず以下の形式で報告すること：
 ## 🚫 注意
 - 著作権保護素材の直接引用は禁止（要約分析のみ使用）。
 - 不適切表現・禁止語を自動除外。
-- 出力は常に1000字以内に収める。
+- 出力は Suno UI の上限 1000字以内に収める（🧪 V5.5 期に観測。V6 の上限は公式未記載）。
 - ユーザーが「明るく」「夜っぽく」等を指定した場合は、そのニュアンスを再反映。
 - **必ず情報源を明記**し、どのサイトから何を取得したかを透明化する。
