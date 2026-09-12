@@ -219,9 +219,14 @@ feature_matrix:
   status: official
   date: 2026-09-12
   evidence:
+    - https://suno.com/blog/building-the-future-of-music-responsibly
     - https://help.suno.com/en/articles/3198209
   note: confirms migration verdict 12. The kit's decomposition rule mirrors what the service
-    already does internally rather than evading a ban.
+    already does internally rather than evading a ban. Attribution correction - the redirect
+    sentence is on the responsibly blog, NOT on the help article, which only says a song may
+    fail to generate. The first pass cited the help article for both because a web search
+    summary blended several pages; the help article was then fetched directly and the claim
+    was absent. Cite from a page that was fetched, never from a search summary.
 - feature: download limits explained as a measure against mass export
   status: rejected
   date: 2026-09-12

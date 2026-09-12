@@ -419,7 +419,7 @@ Observed 2026-09-09, single source, not reproduced by this kit.
 
 ---
 
-## Independent benchmark — external measurement
+## Independent benchmark
 
 The rows below are quoted from a named external document, not claims this kit makes about how V6
 behaves. WildSongBench (192 prompts, 94 Chinese / 98 English) as published on the YuE2-3B model
@@ -459,7 +459,8 @@ above are not.
 | Independent | The Verge, first-day hands-on | 2026-09-09 | Known weak points (unverified) |
 | Official | https://suno.com/blog/introducing-v6 | read 2026-09-12 | Industry partners, upload safeguards |
 | Official | https://suno.com/terms (effective 2026-09-03) | read 2026-09-12 | Upload rights warranty, Voice Model own-voice-only rule |
-| Official | https://help.suno.com/en/articles/3198209 (Does Suno moderate songs?) | read 2026-09-12 | Artist-name and trademark blocking |
+| Official | https://help.suno.com/en/articles/3198209 (Does Suno moderate songs?) | read 2026-09-12 | A song may fail to generate if it contains well-known artist or people names, or copyrighted / trademarked terms |
+| Official | https://suno.com/blog/building-the-future-of-music-responsibly | read 2026-09-12 | Suno removes an artist name from a prompt and redirects toward descriptive musical characteristics |
 | Independent | https://huggingface.co/m-a-p/YuE2-3B (YuE2-3B model card) | read 2026-09-12 | WildSongBench figures and its candidate-selection caveat |
 | Community | Research report 2026-09-12, summarising Reddit threads 2026-09-09..09-12 | 2026-09-12 | Everything under *Community findings*. Threads not retrieved — Reddit blocks this kit's fetcher |
 
