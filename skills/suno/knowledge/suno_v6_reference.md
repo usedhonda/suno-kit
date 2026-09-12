@@ -295,9 +295,16 @@ Video: use its sense of motion, but do not infer tempo from the edit cuts.
 Target: slow-burning alternative pop that grows from intimate to cinematic.
 ```
 
-**Rights preflight** — before attaching anything, confirm you hold the rights to it. Suno's terms
-require the uploader to own or be licensed for what they submit, and voice references need the
-speaker's consent.
+**Rights preflight** — before attaching anything, confirm you hold the rights to it. This is not
+housekeeping: V6 was built with industry partners, and Suno says it "introduced safeguards to
+screen uploaded audio files and lyrics for unauthorized use", so an unclear source can stop the
+generation rather than quietly degrade it.
+
+The terms effective 2026-09-03 require the uploader to warrant they hold "all rights, licenses,
+consents, permissions, power and/or authority necessary to submit and use" what they upload. Voice
+references are stricter still: a user "can only create a Voice Model resembling your own voice" and
+agrees "not to create, or attempt to create, a Voice Model of another person". With multi-source
+and multimodal input this now has to be checked per attachment, not once per song.
 
 ---
 
@@ -319,14 +326,81 @@ Per-rule verdicts: see `v55_to_v6_migration.md`.
 
 ## Community findings
 
-### Community-reported inline tags (unofficial — verify per song)
+Everything below is `community_experimental` until this kit reproduces it.
 
-Community-sourced, not confirmed official; effect is context-dependent — A/B test one at a time.
-All entries here are `community_experimental` until reproduced.
+**Provenance, stated once for the whole section.** These entries come from a research report dated
+2026-09-12 that summarised Reddit threads posted 2026-09-09..09-12. **The threads themselves were
+not retrieved** — Reddit blocks this kit's fetcher — so the attribution is to the report, not to a
+thread anyone here has read. Thread titles, dates and handles are kept so a human can find the
+originals and check them.
 
-*(Empty. V6 shipped 2026-09-09 and V6-specific community prompt science has not accumulated yet.
-The harvest loop appends here. V5.5-era techniques are not copied in — they live in
-`suno_v55_reference.md` and are ranked as `legacy_v55_candidate` in `v55_to_v6_migration.md`.)*
+Semantic instruction stays primary (see *Carrying V5.5 technique into V6*). Nothing here promotes
+tags back to a primary control: every tag entry is a recovery move to A/B, never a default.
+
+### V6-era corroboration of rules this kit already had
+
+Not new techniques. Testers working on V6 independently arrived at three rules this kit has
+documented since V5.5. That is not confirmation, but it is evidence the rules survived the
+rebuild — which is what `legacy_v55_candidate` was waiting for.
+
+| Rule this kit already had | Where it lives | What V6 testers reported |
+|---|---|---|
+| Negations belong in Exclude, never in Style | `suno_v55_reference.md` Exclude Best Practices — "Use the Exclude field, NOT \"no X\" in Style" | `NO reverb, no echo` written into Style reportedly left reverb in the output; positive wording (`dry, close-mic'd, narrow stereo image`) plus a separate Exclude worked better |
+| Commas mark breath, CAPS pushes delivery | `lyric_craft.md` punctuation table | Mid-line commas used as breath marks, selective CAPS for stronger delivery |
+| `[Silence]` controls timing | `suno_v55_reference.md` | Reported still effective on V6. The new detail is granularity — at the end of every lyric line, not only between sections |
+
+One entry in this kit runs against the first row: `yaml_template.md` documents `no intro, no
+humming` inside Style as a deliberate workaround with a reported ~50% success rate. It is flagged
+there now. A/B it rather than assuming either side is right.
+
+### Lyric markup — `community_experimental`
+
+- **Line-end `[Silence]` against rushed vocals.** Put `[Silence]` at the end of every lyric line in
+  the affected sections. Do not give the tag its own line, and do not stack punctuation in front of
+  it. Reported effect: more room between lines, less hurry, melody regains its length. Caveat: one
+  glam-metal power ballad, no controls, genre dependence likely.
+- **Parentheses as a vocal-role marker.** `( ... )` around backing lines with the lead singing only
+  the unparenthesised ones reportedly improved lead separation and call-and-response. Caveat:
+  observed on an a cappella quartet, untested on a band arrangement. This kit's existing duet
+  guidance in `suno_v55_reference.md` points the other way for *real* duets — split the parts
+  rather than making one generation sing both. The two are different requests; check before mixing.
+- **Stacking stop markers is not monotonic.** Extra terminal markers reportedly interfered rather
+  than reinforced. `[2 Bar Rest]` was reported ignored while `[Silence]` acted, suggesting unknown
+  tags are dropped rather than approximated.
+
+### Style patterns — `community_experimental`
+
+- **Instruments as actions, not nouns.** `continuous foreground riffs, interlocking leads,
+  alternate picking` instead of `electric guitar`; fills, double bass, ghost notes instead of
+  `drums`. Reported to stop instruments dropping out during verses. Caveat: rock-centric trials.
+- **A production-quality clause.** A short tail such as `close-mic vocals, crisp transients, clear
+  instrument separation, open low-mids, stable tonal balance`. The individual descriptors already
+  exist in `style_catalog.md`; what is new is using them as one deliberate block. Caveat: its
+  author calls it unofficial, and a long clause crowds out the musical direction.
+- **Style length is unresolved — do not pick a winner.** Three incompatible recommendations
+  circulated in the same week: fill the 1000-character UI limit with dense comma-separated tags;
+  keep to 8-14 words for older-model texture; or ignore length entirely and order the content by
+  musical hierarchy (genre, vocal, drums, guitars, bass, arrangement, production, ending). Treat
+  these as three profiles to benchmark, not as a rule.
+
+### Workflow — `community_experimental`
+
+- **Short sections as edit boundaries.** Size each `[Verse]` / `[Pre-Chorus]` / `[Chorus]` to the
+  unit you would want to re-roll, because on V6 the section is also the editing unit. A weak verse
+  can then be replaced while a good chorus is kept untouched. This is a consequence of local edit
+  (see *local edit*), not a prompt trick.
+- **Sibling mashup.** Mash together the two candidate takes returned by a single create request.
+  Reported gains in fidelity, cohesion and overall sound quality. For an older song: remaster it
+  twice on V6, then mash those two. This is the documented multi-source mashup fed an unusual
+  input — that feature is described as combining *different* songs.
+- **Variety has two regimes.** Use `0` for calibration and prompt A/B, because Variety rewrites the
+  style prompt itself (see *Generation controls*). But one report found `Bold` escaped a
+  rushed-vocal failure that `0` could not. Read it as a mutation operator for climbing out of a
+  failure basin, then return to `0` and try to reproduce the win under control.
+- **Late-song density is a diagnostic, not a fix.** On long songs, watch the back half for low-mid
+  buildup, vocal count creeping upward, and section resets getting weaker. One controlled test
+  found arrangement density partly stochastic — identical prompt and settings produced both sparse
+  and muddy takes — so judge a recipe by its success rate across takes, never by one good result.
 
 ---
 
@@ -345,6 +419,34 @@ Observed 2026-09-09, single source, not reproduced by this kit.
 
 ---
 
+## Independent benchmark — external measurement
+
+The rows below are quoted from a named external document, not claims this kit makes about how V6
+behaves. WildSongBench (192 prompts, 94 Chinese / 98 English) as published on the YuE2-3B model
+card; every figure was checked against the source when read on 2026-09-12.
+
+| Metric | Suno v5 | Suno v5.5 | Suno v6 | Suno v6 Wild |
+|---|---:|---:|---:|---:|
+| Musicality (higher better) | 5.9918 | 5.8087 | 5.6558 | 5.5644 |
+| SongBench average (higher better) | 6.8721 | 6.7150 | 6.5562 | 6.4195 |
+| MuLan (higher better) | 0.5428 | 0.5089 | 0.4916 | 0.4999 |
+| AllMusicCaps (higher better) | 0.4353 | 0.3917 | 0.4305 | 0.4316 |
+| Q3O prompt adherence (higher better) | 4.5907 | 4.5914 | 4.6258 | 4.5898 |
+| Phoneme error rate (lower better) | 8.10% | 5.96% | 7.58% | 7.45% |
+
+**It is not a like-for-like comparison**, and the benchmark says so: "Open baselines, Suno v6, and
+Suno v6 Wild use two candidates and four ASR passes per candidate, followed by lower-PER selection;
+earlier proprietary systems retain their delivered-candidate protocols."
+
+What survives that caveat is narrow: **V6 does not lead V5.5 across the board here.** Q3O, the
+prompt-adherence measure, is slightly higher on v6, while Musicality, SongBench average and MuLan
+are lower and the phoneme error rate is worse. Do not stretch this into a claim about which model
+sounds better. It is one external benchmark, with an acknowledged protocol difference, and it is
+not Suno's. It is recorded because it is measured and retrievable, which the *Known weak points*
+above are not.
+
+---
+
 ## Sources
 
 | Tier | Source | Date | Used for |
@@ -355,6 +457,11 @@ Observed 2026-09-09, single source, not reproduced by this kit.
 | Official | https://help.suno.com/en/articles/13924481 (v6 FAQ) | read 2026-09-11 | Variety, Max Mode, Simple Mode, retirement of pre-v6 models, Custom Model upgrade |
 | Official | https://help.suno.com/en/articles/13924737 (Current Models) | read 2026-09-11 | Model family and access tiers |
 | Independent | The Verge, first-day hands-on | 2026-09-09 | Known weak points (unverified) |
+| Official | https://suno.com/blog/introducing-v6 | read 2026-09-12 | Industry partners, upload safeguards |
+| Official | https://suno.com/terms (effective 2026-09-03) | read 2026-09-12 | Upload rights warranty, Voice Model own-voice-only rule |
+| Official | https://help.suno.com/en/articles/3198209 (Does Suno moderate songs?) | read 2026-09-12 | Artist-name and trademark blocking |
+| Independent | https://huggingface.co/m-a-p/YuE2-3B (YuE2-3B model card) | read 2026-09-12 | WildSongBench figures and its candidate-selection caveat |
+| Community | Research report 2026-09-12, summarising Reddit threads 2026-09-09..09-12 | 2026-09-12 | Everything under *Community findings*. Threads not retrieved — Reddit blocks this kit's fetcher |
 
-Last verified against source: **2026-09-11**.
+Last verified against source: **2026-09-12**.
 Re-verify after any Suno model update — V6 is a closed, server-side model and may change silently.
