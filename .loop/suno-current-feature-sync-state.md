@@ -1,8 +1,8 @@
 # Current Suno feature compatibility state
 
 status: final
-iteration: 3/4
-research_watermark: 2026-09-11
+iteration: 4/4
+research_watermark: 2026-09-12
 
 feature_matrix:
 - feature: Suno V6 release (v6 / v6-wild / v6-mini)
@@ -205,6 +205,40 @@ feature_matrix:
     also ran a manual resolution check over `knowledge/[a-z0-9_]+\.md`. That compensating
     check is written into the plan and should stay in use.
 
+- feature: independent WildSongBench comparison of Suno v5 / v5.5 / v6 / v6-wild
+  status: independent
+  date: 2026-09-12
+  evidence:
+    - https://huggingface.co/m-a-p/YuE2-3B
+  note: all six columns checked against the source and matched. v6 leads v5.5 only on Q3O
+    prompt adherence; Musicality, SongBench average, MuLan and phoneme error rate are worse.
+    The benchmark itself states v6 and v6-wild used a different candidate-selection protocol
+    than the older proprietary systems, so this is not a like-for-like result and must not be
+    quoted as "v6 sounds worse".
+- feature: Suno strips artist names and redirects to descriptive characteristics
+  status: official
+  date: 2026-09-12
+  evidence:
+    - https://help.suno.com/en/articles/3198209
+  note: confirms migration verdict 12. The kit's decomposition rule mirrors what the service
+    already does internally rather than evading a ban.
+- feature: download limits explained as a measure against mass export
+  status: rejected
+  date: 2026-09-12
+  evidence:
+    - https://help.suno.com/en/articles/13876865
+  note: claimed by the 2026-09-12 research report. The downloads page states allowances but
+    gives no reason for them. Same treatment as the rejected 8-minute claim above. The
+    allowances themselves did verify (Pro 20/month, Premier 60/month, Suno Studio workflows
+    exempt, 7 trial downloads for pre-09-03 free accounts, trial downloads not commercial)
+    but were deliberately kept out of the knowledge layer as billing policy, not prompt craft.
+- feature: community sources for V6 prompt technique are not retrievable by this kit
+  status: constraint
+  date: 2026-09-12
+  note: Reddit blocks this kit's fetcher and the research reports cite internal markers rather
+    than URLs. Every V6 community technique therefore enters as community_experimental
+    attributed to the report, never to a thread anyone here has read. Do not upgrade any of
+    them on the strength of a later report that cites the same unreachable threads.
 iteration_1:
 - Official release notes were read on 2026-08-13 through the current top entries:
   Voices mobile (2026-08-07), Cover Art improvements (2026-07-31), Duration Slider
@@ -268,6 +302,47 @@ iteration_3:
   no-number invariant checked line by line on the rewritten master; a manual
   `knowledge/[a-z0-9_]+\.md` resolution check at every step because C6 cannot see those
   paths; dry-run evidence that the new CLI flags change nothing when omitted.
+iteration_4:
+- Trigger: the owner supplied a second research report dated 2026-09-12 and said community
+  experiments matter a great deal. This was a MANUAL feed. The harvest loop is still PAUSED,
+  so on resume it must not treat the Community findings section as empty and append again.
+- Unlike report 8, this one carries almost no official claims. Its substance is Reddit
+  threads from 2026-09-09..09-12, so the verification problem was different: not "is the
+  official page saying this" but "can the source be retrieved at all".
+- It cannot. Reddit blocks this kit's fetcher, and the report cites internal markers rather
+  than URLs. Seven of the nine techniques therefore rest on the report's summary alone.
+  Recorded as `community_experimental` with the provenance stated once for the whole
+  section, explicitly attributing to the report rather than to a thread anyone here read.
+- Verified against primary sources instead: the WildSongBench table on the YuE2-3B model
+  card matched on all six columns for four Suno models, including its own statement that
+  v6 and v6-wild use a different candidate-selection protocol than the older systems; the
+  V6 blog's industry partners and upload safeguards; the 2026-09-03 terms (upload rights
+  warranty, Voice Model own-voice-only); and the moderation page.
+- The moderation page produced the most useful single fact: Suno says it strips an artist
+  name from a prompt and redirects the request toward descriptive musical characteristics.
+  The kit's decomposition rule is therefore not a workaround for a ban, it mirrors what the
+  service already does internally. Recorded under migration verdict 12.
+- Rejected one claim, as in iteration 3: the report states Suno explains download limits as
+  curbing mass export. The downloads page gives no reason at all. Not recorded.
+- Corrected the report's own framing. Of its nine "new" techniques only four or five are new
+  to this kit. Line-end `[Silence]`, mid-line commas and CAPS, and the rule that negations
+  belong in Exclude were all already documented — the last since V5.5, where the kit already
+  wrote that "no fiddles" can cause fiddles to appear. Those three are filed as V6-era
+  corroboration of existing rules, which is worth more than three extra tricks: it is the
+  first outside evidence that they survived the V6 rebuild.
+- One internal conflict surfaced and was flagged rather than resolved: `yaml_template.md`
+  documents `no intro, no humming` inside Style as a deliberate workaround with a
+  self-reported 50% success rate, which runs against the negation rule the V6 reports
+  reinforce. A technique that already admits to 50% is not refuted by a thread nobody here
+  could open, so the line now carries a re-test note instead of being removed.
+- Verified but deliberately NOT filed into the knowledge layer: the download allowances and
+  commercial-rights tiers (Pro 20/month, Premier 60/month, Suno Studio workflows exempt,
+  7 trial downloads for pre-09-03 free accounts, trial downloads not commercial). That is
+  platform billing policy, not prompt craft; placed in a prompt reference it would go stale
+  without anyone noticing. Recorded here instead.
+- Owner decision: the report's own design proposals — an experiment YAML schema, an eight
+  axis evaluation, a negative-wording lint, an expanded recipe metadata block — were left
+  out. They are the report author's opinion about how the kit should work, not findings.
 next_step: none from this sweep. Open threads, in order of value: the v6-wild request
   parameter still needs a captured generate request; the `aug_creativity` wire name needs
   first-party confirmation before it should be trusted; the Suno Create screen path in
