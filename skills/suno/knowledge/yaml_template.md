@@ -250,7 +250,7 @@ Trap, Dubstep, distorted guitars, EDM supersaws, female humming
 | Verse 1 統合 | `[Verse 1 - starts spoken then erupts]` | イントロなしで即歌い出し |
 | イントロ省略 | `[Verse 1]` から開始 | 完全にイントロを排除 |
 | Hook 先頭 | `[Short Instrumental Intro]` の直後に `[Hook]` を置き、そこから歌い出す | 4-8 小節の短イントロを確保しつつ、最初の歌唱を強いフックで先出し |
-| 即歌唱 prose | Style 側に `start immediately with guitar and vocal, no intro, no humming` | `no X` を Style に入れる例外ワークアラウンド。stutter / 冒頭ハミングを減らす報告あり（成功率は 50% 程度）。まず構造タグで試し、A/B 用に限定 |
+| 即歌唱 prose | Style 側に `start immediately with guitar and vocal, no intro, no humming` | `no X` を Style に入れる例外ワークアラウンド。stutter / 冒頭ハミングを減らす報告あり（成功率は 50% 程度）。まず構造タグで試し、A/B 用に限定。**V6 では要再検証** — V6 期のコミュニティ報告は、Style 内の否定語がむしろ当の要素を呼び込む例を挙げている（`suno_v6_reference.md` の Community findings）。肯定形で書いて Exclude 側へ寄せた版と A/B すること |
 
 `[Intro]` を使う場合は長いインストが入ることを許容する前提で。
 推奨 descriptors: atmospheric, fade in, soft pads, ambient, building, sparse
