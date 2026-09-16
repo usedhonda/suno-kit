@@ -1,11 +1,12 @@
 # suno-cli release candidate state
 
-status: final
-iteration: 5
-published_version: 0.3.0
-published_tag: v0.3.0
-candidate_version: 0.4.0
-candidate_commit: 55a17cf
+status: released
+iteration: 6
+published_version: 0.4.0
+published_tag: v0.4.0
+published_on: 2026-09-16
+published_commit: 55a17cf
+previous_published_version: 0.3.0
 baseline:
 - Registry query on 2026-08-12 returned `@usedhonda/suno-cli` latest `0.3.0`.
 - `0.3.1` was prepared but never tagged or published, so `0.3.0` is still the
@@ -112,9 +113,24 @@ release_handoff:
   retracted for the same reason the iteration-1 one was: acting on it would ship a build
   that predates the V6 work.
 - The `--variety` question raised in iteration 4 is resolved and the flag is fixed. Option
-  (a) was taken: capture first, then correct. Nothing is left open for the tagger to decide.
-- Human-only action after review: create an annotated tag `v0.4.0` at the candidate
-  commit, then push that tag. The existing trusted tag workflow performs npm
-  publication; do not invoke `npm publish` directly.
-next_step: none; candidate is ready for explicit human release authorization.
-stop_reason: release_candidate_ready
+  (a) was taken: capture first, then correct. Nothing was left open for the tagger to decide.
+- DONE. The owner authorised the release on 2026-09-16. An annotated tag `v0.4.0` was created
+  at `55a17cf` and pushed; the trusted workflow ran build, test and
+  `npm publish --provenance --access public`. `npm publish` was never invoked directly.
+iteration_6:
+- Released 2026-09-16. Workflow run 35094990501 succeeded in 22s, every step green.
+  Registry confirms `@usedhonda/suno-cli` latest = 0.4.0.
+- Pre-flight checks before tagging: `v0.4.0` was unused, `package.json` already read 0.4.0,
+  and `git diff --name-only 55a17cf HEAD -- suno-cli/` was empty, so the tagged package was
+  byte-identical to the verified candidate even though HEAD had moved on.
+- Incident handled on the way: every `git` invocation started failing with "You have not
+  agreed to the Xcode license agreements". `/usr/bin/git` was blocked, but Homebrew's git
+  2.51.0 was installed and working, so the release proceeded on `/opt/homebrew/bin/git`. No
+  sudo and no owner action were needed. If this recurs, reach for the Homebrew binary before
+  asking anyone to run `xcodebuild -license`.
+- What 0.4.0 actually ships, for anyone reading a bug report against it: V6 is the default
+  model, so `create` with unchanged arguments resolves differently than on 0.3.0; v5.5 and
+  earlier are retired and warn; `--max-mode` and `--variety` are new; `--variety` takes the
+  integer level 0-4 established by first-party capture earlier the same day.
+next_step: none. The next release loop starts from published_version 0.4.0.
+stop_reason: released
