@@ -1,7 +1,7 @@
 # suno-cli release candidate state
 
 status: final
-iteration: 3/4
+iteration: 4/4
 published_version: 0.3.0
 published_tag: v0.3.0
 candidate_version: 0.4.0
@@ -59,14 +59,39 @@ iteration_3:
   by a third party and never reproduced here. It is marked as such in the code, the CLI
   README and the knowledge canon. Anyone cutting this release should know that one flag
   rests on weaker evidence than the rest.
+iteration_4:
+- A 2026-09-16 research report surfaced a second third-party project, BetterSuno, which added
+  V6 support on 2026-09-14. Its API reference was fetched and read directly. It documents
+  `metadata.control_sliders.aug_creativity` as discrete integers 0-4 (0=off, 1=normal,
+  2=high, 3=extra, 4=max), not the 0..1 fraction this CLI sends as `variety / 100`.
+- Consequence if that reading is correct: `--variety 100` sends `1.0`, which would be
+  "normal" rather than "max", so the flag would never reach the top of its range. Only
+  `--variety 0` means the same thing under both readings.
+- Nothing was changed in the CLI. Two third-party projects disagreeing does not establish
+  either one, and neither has been reproduced here. What did change is the evidence balance:
+  the field NAME is now better supported (two independent projects agree on
+  `aug_creativity`) while its TYPE is less certain than this repo previously implied. Both
+  halves are recorded in the CLI README and in the knowledge canon.
+- This does affect the release decision, so it is recorded here rather than left implicit.
+  `0.4.0` would be the first published build carrying `--variety`, and publishing a control
+  that is probably capped near the bottom of its range is worse than not publishing it.
+- The question is settled by capture, not by argument: set Variety to each level in a
+  logged-in browser and compare the `generate` request bodies. The existing `--mint-check`
+  path already intercepts and aborts that request, so the capture costs no credits.
 release_handoff:
 - Candidate version: `0.4.0`
 - Candidate commit: `bf30ad6`
 - Supersedes the iteration-2 handoff, which named `085e23e`. That instruction is
   retracted for the same reason the iteration-1 one was: acting on it would ship a build
   that predates the V6 work.
-- Human-only action after review: create an annotated tag `v0.4.0` at the candidate
+- **Open question before tagging, added 2026-09-16:** decide what `--variety` does in this
+  release. Three options, in the order this repo would rank them: (a) capture the request
+  and fix or confirm the scale, then tag; (b) hold `--variety` out of `0.4.0` and ship the
+  rest; (c) tag as-is, accepting a documented, probably-capped control. The README states
+  the conflict either way, so (c) is defensible but should be a decision, not an oversight.
+- Human-only action after that decision: create an annotated tag `v0.4.0` at the candidate
   commit, then push that tag. The existing trusted tag workflow performs npm
   publication; do not invoke `npm publish` directly.
-next_step: none; candidate is ready for explicit human release authorization.
-stop_reason: release_candidate_ready
+next_step: resolve the `--variety` scale question, then seek explicit human release
+  authorization. The candidate itself is otherwise unchanged and still verified.
+stop_reason: open_question_before_release
