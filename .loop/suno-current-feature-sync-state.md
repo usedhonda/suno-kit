@@ -257,7 +257,7 @@ feature_matrix:
     attributed to the report, never to a thread anyone here has read. Do not upgrade any of
     them on the strength of a later report that cites the same unreachable threads.
 - feature: V6 Variety wire scale
-  status: conflict
+  status: resolved by first-party capture on 2026-09-16 - see resolution below
   date: 2026-09-16
   evidence:
     - https://github.com/MrDoe/BetterSuno - docs/suno-api-reference.md, fetched and read
@@ -279,6 +279,25 @@ feature_matrix:
     range; only `--variety 0` is identical under both readings. Settle by capture, not
     argument - the existing `--mint-check` path intercepts and aborts the generate request,
     so reading the body costs no credits.
+  resolution:
+    date: 2026-09-16
+    method: the web client's create request was intercepted inside the page, before it left
+      the browser. Nothing was submitted, no generation started, no credits were spent, and
+      the page was restored to its original state afterwards.
+    observed: with the UI at Weirdness 51, Style Influence 51 and Variety 3, the body carried
+      `{ weirdness_constraint: 0.51, style_weight: 0.51, aug_creativity: 3 }`. The Variety
+      slider itself reports aria-valuemin 0 and aria-valuemax 4, with level 2 labelled
+      "High". Endpoint POST https://studio-api-prod.suno.com/api/generate/v2-web/.
+    verdict: BetterSuno was right and this repo was wrong. Variety is an integer level sent
+      unchanged. `variety / 100` capped the control near the bottom of its range - at
+      `--variety 100` it sent 1.0, which is level 1, "normal".
+    second_finding: one `control_sliders` object genuinely mixes scales. The other three
+      sliders ARE fractions, so the divide-by-100 they already did is correct. The earlier
+      suspicion that they were 100x off was unfounded, and it had been reached by reading
+      body.ts alone while the division actually lives in cli.ts. Read both halves of a
+      pipeline before calling one of them a bug.
+    fixed_in: 55a17cf - `--variety` now takes 0-4 and rejects anything else, with a
+      regression test pinning the mixed-scale body exactly as captured.
 - feature: Custom Models minimum size and rights requirement
   status: official
   date: 2026-09-16
@@ -442,8 +461,24 @@ iteration_5:
   the definition was adopted and the compatibility claim was not.
 - Not done, by scope: no change to suno-cli runtime behaviour, no adoption of any third-party
   wire value, no mygpts edits.
-next_step: resolve the Variety wire scale by capturing a real generate request, which also
-  unblocks the 0.4.0 release decision. Then, in order of value: the v6-wild request
+iteration_6:
+- Trigger: the owner asked for the Variety scale to be settled in a browser rather than
+  argued about. It was, on 2026-09-16, and the CLI was wrong.
+- Method worth reusing: patch `window.fetch` in the page to match the generate URL, read the
+  body, and throw before calling through. The request never reaches Suno, so a create can be
+  inspected for free. Verify the patch is live before clicking anything, restore the UI
+  afterwards, and extract only the fields in question - never tokens.
+- Two results, in opposite directions. Variety was wrong and is fixed. The three older
+  sliders were suspected of a 100x error and are correct. The suspicion came from reading
+  `body.ts`, which passes them through, without reading `cli.ts`, which divides them first.
+- Also observed on the way past, and now recorded: My Taste is available on V6 (the toggle
+  is in the V6 Advanced panel, which no official page states), Duration exists as a
+  Custom/Auto control, unset optional controls are omitted from the body rather than sent as
+  null, `gpt_description_prompt` was absent entirely rather than an empty string, and
+  `create_surface` is a metadata key this kit does not send.
+- This closed the release blocker raised in the previous iteration, so 0.4.0 is a clean
+  candidate again.
+next_step: in order of value: the v6-wild request
   parameter still needs a captured generate request; the `aug_creativity` wire name needs
   first-party confirmation before it should be trusted; the Suno Create screen path in
   agent/suno_flow_style_extract.md needs a human to look at the current UI.
