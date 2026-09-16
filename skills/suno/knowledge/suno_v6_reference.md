@@ -570,5 +570,21 @@ above are not.
 | Third-party | https://github.com/MrDoe/BetterSuno — `docs/suno-api-reference.md` | read 2026-09-16 | The disputed 0-4 Variety scale, plus the duration and personalization fields listed as capture targets. Not adopted |
 | Community | Research report 2026-09-16, summarising Reddit threads 2026-09-14..09-16 | 2026-09-16 | The route-before-prompt entries under *Community findings*. Threads not retrieved |
 
+### Thread addresses for the 2026-09-16 community entries
+
+The 2026-09-16 report supplied thread URLs, which the 2026-09-12 one did not. They are recorded
+here so a human can check the originals in one click. **This kit has not opened them** — Reddit
+blocks its fetcher — so they are addresses, not evidence that anyone here read the thread.
+
+| Entry | Thread |
+|---|---|
+| Simple and Advanced as different paths | https://www.reddit.com/r/SunoAI/comments/1wehqi9/ |
+| Three layers of context with My Taste; `v6-mini` as a specialist fallback | https://www.reddit.com/r/SunoAI/comments/1weq2kw/ |
+| Give each genre in a fusion a job | https://www.reddit.com/r/SunoAI/comments/1wfhxg5/ |
+| Compile an old prompt into a V6 brief | https://www.reddit.com/r/SunoAI/comments/1wgb1yl/ |
+| Checkpoint long songs around four minutes | https://www.reddit.com/r/SunoAI/comments/1wdysw9/ |
+| Varied prompts collapsing to one arrangement | https://www.reddit.com/r/SunoAI/comments/1wguw9i/ |
+| Probing the Simple Mode orchestration layer | https://www.reddit.com/r/SunoAI/comments/1wf5stu/ |
+
 Last verified against source: **2026-09-16**.
 Re-verify after any Suno model update — V6 is a closed, server-side model and may change silently.
