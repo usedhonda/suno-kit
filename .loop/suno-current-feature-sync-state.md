@@ -1,7 +1,7 @@
 # Current Suno feature compatibility state
 
 status: final
-iteration: 5 (manual feed; the four-iteration loop budget was already spent)
+iteration: 6 (manual feeds; the four-iteration loop budget was already spent)
 research_watermark: 2026-09-16
 
 feature_matrix:
@@ -331,6 +331,13 @@ feature_matrix:
     `duration` tops out at 360s, six minutes, below the official eight-minute generation
     ceiling - so an explicit target and the model limit are probably different things, which
     is inference and is labelled as such.
+  correction_2026-09-16: the same-day capture contradicted one of these. In Advanced mode
+    with `create_mode: "custom"`, `gpt_description_prompt` was absent from the body entirely,
+    not present as "". Whatever selects custom mode, it is not this key carrying an empty
+    string. The other three entries stand as capture targets, and two of them gained
+    first-party support on the way past: the Duration (Custom/Auto) and Personalize (My
+    Taste) controls both exist in the V6 Advanced panel, though their wire shapes were not
+    captured because both were left at their defaults, which send no key at all.
 iteration_1:
 - Official release notes were read on 2026-08-13 through the current top entries:
   Voices mobile (2026-08-07), Cover Art improvements (2026-07-31), Duration Slider
@@ -468,6 +475,14 @@ iteration_6:
   body, and throw before calling through. The request never reaches Suno, so a create can be
   inspected for free. Verify the patch is live before clicking anything, restore the UI
   afterwards, and extract only the fields in question - never tokens.
+- Gotcha for anyone reusing that recipe: the create form's sliders are ARIA divs, and a
+  synthesized KeyboardEvent moves one step per focus, not one per event - ten dispatched
+  ArrowRights moved Weirdness from 50 to 51, not to 60. Enough to get off the default, which
+  is all this capture needed, but reaching level 4 will take real pointer interaction.
+- Coverage limit, stated so nobody over-reads the entry: the wire values actually seen are
+  Variety 2 and 3, and 0.51 for the two fraction sliders. Levels 0, 1 and 4 and the range
+  endpoints come from the slider's own aria-valuemax of 4 plus BetterSuno's labels. Strong,
+  corroborated, but not each individually captured.
 - Two results, in opposite directions. Variety was wrong and is fixed. The three older
   sliders were suspected of a 100x error and are correct. The suspicion came from reading
   `body.ts`, which passes them through, without reading `cli.ts`, which divides them first.
