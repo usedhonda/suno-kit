@@ -120,47 +120,71 @@ Anything parked this way is worth re-testing when a new source appears.
 Generating up to eight minutes is not the same as eight minutes of *stable* output. Community
 reports of drift past the four-minute mark live under *Community findings*.
 
-### Wire names for these controls — **third-party, not observed here**
+### Wire names for these controls — `observed_v6`
 
-A third-party project reports that the web client sends Variety as
-`metadata.control_sliders.aug_creativity` on a 0..1 scale, alongside `metadata.is_max_mode`.
-
-⚠️ **This kit has not reproduced that first-hand**, so it is *not* `observed_v6` — unlike the model
-identifiers below, which were seen directly in a first-party session. `suno-cli` sends these names
-because the owner asked for the controls, and the code says plainly that the names are unverified.
-Re-verify against a live request before trusting them. This is the same standard that keeps
-`v6-wild` without an alias.
-
-#### The Variety scale is now actively disputed — 2026-09-16
-
-A second third-party project, BetterSuno, added V6 support on 2026-09-14 and documents the **same
-field with a different type**. Its API reference was fetched and read directly:
+**Captured first-hand on 2026-09-16** from a logged-in session. The web client's create request
+was intercepted in the page before it left the browser, so nothing was submitted and no credits
+were spent. Endpoint:
 
 ```
-| control_sliders.aug_creativity | 0-4 | V6 Variety level:
-  0=off, 1=normal, 2=high, 3=extra, 4=max (only V6 models) |
+POST https://studio-api-prod.suno.com/api/generate/v2-web/
 ```
 
-Discrete integers, not a normalised fraction. `suno-cli` currently sends `variety / 100`, i.e.
-`0.0..1.0`. **If BetterSuno is right, `--variety 100` sends `1.0`, which would be "normal" rather
-than "max"** — the flag would be quietly capped near the bottom of its range. `--variety 0` happens
-to mean "off" under both readings.
+#### The three sliders do not share one scale
 
-Do **not** switch to 0..4 on this. Two third-party projects disagreeing does not make the louder
-one correct, and neither has been reproduced here. **The field name is now better supported than
-before** — two independent projects name `aug_creativity` — while **its type is less certain than
-the kit previously implied.** Both statements are recorded as such.
+Two of them are fractions and one is a level, inside the same object. Set the UI to Weirdness 51,
+Style Influence 51, Variety 3, and the body carried:
 
-This is decided by capture, not by argument: set Variety to each level in a logged-in browser and
-compare the `generate` request bodies. Until then the flag stays as it is and stays flagged.
+```json
+"control_sliders": {
+  "weirdness_constraint": 0.51,
+  "style_weight": 0.51,
+  "aug_creativity": 3
+}
+```
+
+| Control | UI range | On the wire |
+|---|---|---|
+| Weirdness | 0-100 (`aria-valuemax` 100) | `weirdness_constraint`, divided by 100 |
+| Style Influence | 0-100 | `style_weight`, divided by 100 |
+| **Variety** | **0-4** (`aria-valuemax` 4; level 2 is labelled "High") | **`aug_creativity`, the integer level, unchanged** |
+
+This settles a dispute rather than adding a fact. Variety was previously recorded here on a
+third-party 0..1 claim, and `suno-cli` divided it by 100 — so `--variety 100` sent `1.0`, which is
+level 1, "normal". **The control could never reach the top of its range.** A second third-party
+project, BetterSuno, had documented 0-4 with exactly the labels the UI uses (0=off, 1=normal,
+2=high, 3=extra, 4=max); the capture confirms it. `suno-cli` now sends the level unchanged.
+
+The opposite worry also resolved: the divide-by-100 on the other three sliders was suspected of
+being a 100x error, and it is correct. **Do not make the four consistent with each other.** They
+are not consistent at the source.
+
+#### Other fields seen in the same body — `observed_v6`
+
+Top-level keys: `token`, `generation_type`, `title`, `tags`, `negative_tags`, `mv`, `prompt`,
+`make_instrumental`, `user_uploaded_images_b64`, `metadata`, `override_fields`, `cover_clip_id`,
+`cover_start_s`, `cover_end_s`, `persona_id`, `artist_clip_id`, `artist_start_s`, `artist_end_s`,
+`continue_clip_id`, `continued_aligned_prompt`, `continue_at`, `transaction_uuid`,
+`token_provider`.
+
+`metadata` keys: `web_client_pathname`, `create_surface`, `is_max_mode`, `is_mumble`,
+`create_mode`, `user_tier`, `create_session_token`, `disable_volume_normalization`,
+`control_sliders`. `mv` was `chirp-hawk` and `create_mode` was `custom`, re-confirming both.
+
+**Unset optional controls are omitted, not sent as null.** With Duration on *Auto* and Personalize
+*Off*, neither `duration` nor `use_personalization` appeared anywhere in the body. So an absent key
+is how "leave it to Suno" is expressed.
+
+`create_surface` is a metadata key this kit does not send. Not known to be required — recorded
+because it was there.
 
 #### Other fields the same project reports — capture targets, not adopted
 
 | Field | Reported shape | Why it is not adopted |
 |---|---|---|
-| `duration` | seconds, 10-360, 5-second steps, omit for auto | Third-party only. Note 360 s is six minutes, below the official eight-minute generation ceiling, so an explicit target and the model's limit are probably different things — that reading is inference, not documentation |
-| `use_personalization`, `do_personalize_lyrics`, `personalization_user_uuid` | booleans plus a uuid, for My Taste | Third-party only. Official pages still name no V6 compatibility for My Taste |
-| `gpt_description_prompt: ""` | empty string keeps Custom mode | Third-party only, and an omitted key versus an empty string is exactly the kind of difference a capture settles |
+| `duration` | seconds, 10-360, 5-second steps, omit for auto | The **control exists** — the V6 Advanced panel has a Duration toggle reading *Custom / Auto*, seen 2026-09-16. The field name and range are still third-party: the capture was taken on *Auto*, which sends no key at all. Note 360 s is six minutes, below the official eight-minute generation ceiling, so an explicit target and the model's limit are probably different things — inference, not documentation |
+| `use_personalization`, `do_personalize_lyrics`, `personalization_user_uuid` | booleans plus a uuid, for My Taste | The **control exists on V6** — the same panel has a Personalize toggle labelled *My Taste*, seen 2026-09-16. That is first-party evidence of availability, which no official page states. The field names remain third-party: the capture was taken with it *Off*, which sends no key |
+| `gpt_description_prompt: ""` | empty string keeps Custom mode | **Corrected by the capture.** In Advanced mode with `create_mode: "custom"`, the key was **not present at all** — not an empty string. Whatever selects custom mode here, it is not this key carrying `""` |
 | `mv: "chirp-hawk-wild"` | the `v6-wild` identifier | **Contradicted by first-party testing here** — see *Why `v6-wild` has no identifier of its own*. This kit already found that string in client state and still saw both wild generations come back as `chirp-hawk`. The report corroborates that the string exists; it does not show a create request carrying it |
 
 ---
@@ -183,7 +207,9 @@ article — all were read directly, not summarised from a report.
 | Embedding API | unspecified |
 | Duration Slider on V6 | unspecified — the slider shipped 2026-07-20 for **V5.5 / Web only**. A third-party client reports an explicit `duration` field; see *Wire names* |
 | Weirdness / Style Influence / Audio Influence semantics on V6 | unspecified — do not assume V5.5 behaviour carries over |
-| Voices / My Taste / Persona compatibility | unspecified for V6 specifically — **Custom Models are the exception and are confirmed**, see Generation controls above. Do not treat the four as one group. My Taste's own help page (read 2026-09-16) defines it — "My Taste learns about what you're enjoying on Suno" from "your listening and creation habits" — but names **no model compatibility at all**, so V6 support is still not an official claim. A third-party client implements V6 personalization fields; see *Wire names* |
+| Voices / Persona compatibility | unspecified for V6 specifically. Do not treat these as one group with the two rows below |
+| My Taste on V6 | **available, `observed_v6`** — the V6 Advanced create panel carries a Personalize toggle labelled *My Taste* (seen 2026-09-16). Its own help page, read the same day, defines the feature — "My Taste learns about what you're enjoying on Suno" from "your listening and creation habits" — but names **no model compatibility**, so availability is this kit's observation, not Suno's claim. What it does to a V6 generation is still unmeasured, and it is personalization that keeps learning, so a My Taste generation is not reproducible from the prompt alone |
+| Custom Models on V6 | **confirmed** — see Generation controls above |
 | Output codec / sample rate / bitrate | unspecified |
 | Image / video / audio input limits, formats, counts | unspecified |
 
@@ -569,6 +595,7 @@ above are not.
 | Official | https://help.suno.com/en/articles/11362561 (My Taste) | read 2026-09-16 | What My Taste is and what it learns from. Names no model compatibility |
 | Third-party | https://github.com/MrDoe/BetterSuno — `docs/suno-api-reference.md` | read 2026-09-16 | The disputed 0-4 Variety scale, plus the duration and personalization fields listed as capture targets. Not adopted |
 | Community | Research report 2026-09-16, summarising Reddit threads 2026-09-14..09-16 | 2026-09-16 | The route-before-prompt entries under *Community findings*. Threads not retrieved |
+| First-party capture | Suno web client create request, intercepted in-page before it left the browser | 2026-09-16 | The slider wire scales, the request key list, `create_surface`, and that unset optional controls are omitted rather than nulled. Nothing was submitted and no credits were spent |
 
 ### Thread addresses for the 2026-09-16 community entries
 
