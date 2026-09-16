@@ -204,14 +204,23 @@ V5.5 の推奨値（安全域 15-85、Cover は Audio 25% 起点、Sample 全曲
 
 ---
 
-## 11. Duration / Voices / Custom Models / My Taste / Persona — **keep（V5.5 限定として）**
+## 11. Duration / Voices / My Taste / Persona — **keep（V5.5 限定として）**
 
 | 機能 | 状態 |
 |---|---|
 | Duration Slider | 2026-07-20 に **V5.5 / Web 限定**で提供。**V6 対応は未記載** |
-| Voices / Custom Models / My Taste / Persona | V5.5 の機能。**V6 との互換は公式に未記載** |
+| Voices / My Taste / Persona | V5.5 の機能。**V6 との互換は公式に未記載**。My Taste は 2026-09-16 に公式ページを直接読んだが、機能の説明はあってもモデル互換性への言及が無い |
 
-**V5.5 の設定を V6 へ自動継承しない。** 尺の制御は引き続き構造（form / ending intent）で行うのが安全。
+**Custom Models はこの箱から出す — V6 で確定。** 公式が「Fine-tune v6 on your own tracks」と明記し、
+既存の custom model も自動で V6 へ移行する。作成には **6曲以上**と、**投入する全曲の権利保有**が要る。
+アーティスト名で寄せるより権利的に明確な「自分の音」の作り方なので、ここだけ扱いが違う。
+
+**尺の扱いも更新。** V6 は **1生成あたり最大8分**（公式確定。以前この数値を根拠不足で却下したが、
+有効な出典が出たため差し替えた）。ただし**8分生成できることと8分間品質が保つことは別**で、
+4分過ぎの drift がコミュニティから報告されている。**V5.5 の設定を V6 へ自動継承しない**原則は変わらず、
+尺の制御は構造（form / ending intent）で行い、長尺は Extend や局所編集との併用が安全。
+
+いずれも根拠と限界は `suno_v6_reference.md` を参照。
 
 ---
 
