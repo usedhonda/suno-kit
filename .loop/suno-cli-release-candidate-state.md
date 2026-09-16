@@ -5,7 +5,7 @@ iteration: 4/4
 published_version: 0.3.0
 published_tag: v0.3.0
 candidate_version: 0.4.0
-candidate_commit: bf30ad6
+candidate_commit: 3ea06c1
 baseline:
 - Registry query on 2026-08-12 returned `@usedhonda/suno-cli` latest `0.3.0`.
 - `0.3.1` was prepared but never tagged or published, so `0.3.0` is still the
@@ -78,9 +78,17 @@ iteration_4:
 - The question is settled by capture, not by argument: set Variety to each level in a
   logged-in browser and compare the `generate` request bodies. The existing `--mint-check`
   path already intercepts and aborts that request, so the capture costs no credits.
+- Candidate re-pointed from `bf30ad6` to `3ea06c1` for a reason worth naming, because this is
+  the third time this file has gone stale the same way. `suno-cli/README.md` ships inside the
+  npm tarball, and the warning section describing this very conflict was added AFTER
+  `bf30ad6`. Tagging that commit would have published the old one-line caveat while this file
+  claimed the README states the conflict - making option (c) below false at the exact commit
+  it was offered for. Nothing else under `suno-cli/` changed, and `npm test` was 84/84 at the
+  new candidate. Rule for next time: any commit touching anything inside `suno-cli/`, README
+  included, moves the candidate.
 release_handoff:
 - Candidate version: `0.4.0`
-- Candidate commit: `bf30ad6`
+- Candidate commit: `3ea06c1`
 - Supersedes the iteration-2 handoff, which named `085e23e`. That instruction is
   retracted for the same reason the iteration-1 one was: acting on it would ship a build
   that predates the V6 work.
