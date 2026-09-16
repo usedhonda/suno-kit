@@ -1,11 +1,11 @@
 # suno-cli release candidate state
 
 status: final
-iteration: 4/4
+iteration: 5
 published_version: 0.3.0
 published_tag: v0.3.0
 candidate_version: 0.4.0
-candidate_commit: 3ea06c1
+candidate_commit: 55a17cf
 baseline:
 - Registry query on 2026-08-12 returned `@usedhonda/suno-cli` latest `0.3.0`.
 - `0.3.1` was prepared but never tagged or published, so `0.3.0` is still the
@@ -86,20 +86,35 @@ iteration_4:
   it was offered for. Nothing else under `suno-cli/` changed, and `npm test` was 84/84 at the
   new candidate. Rule for next time: any commit touching anything inside `suno-cli/`, README
   included, moves the candidate.
+iteration_5:
+- The open question from iteration 4 is CLOSED, by capture rather than by argument. On
+  2026-09-16 the web client's create request was intercepted in-page, before it left the
+  browser, so nothing was submitted and no credits were spent.
+- Result: Variety is an integer level. UI level 3 produced `aug_creativity: 3`. The slider
+  itself reports a range of 0 to 4, with level 2 labelled "High", which matches BetterSuno's
+  labels exactly. The earlier 0..1 reading was wrong.
+- The same body settled the opposite worry too. Weirdness and Style Influence at UI 51 went
+  out as `weirdness_constraint: 0.51` and `style_weight: 0.51`, so the divide-by-100 those
+  flags already did is correct. One `control_sliders` object genuinely mixes scales. The
+  suspicion that those three were 100x off was unfounded.
+- Fixed in `55a17cf`: `--variety` now takes an integer level 0-4 and is sent unchanged;
+  anything else is rejected with the level names in the error. A regression test pins the
+  mixed-scale body exactly as captured, so neither half can later be "corrected" into the
+  other. Build clean, `npm test` 84/84.
+- No user impact from the flag change: `0.4.0` has never been published, so `--variety` has
+  never shipped in any form.
+- Candidate moves to `55a17cf`, the last commit touching `suno-cli/`, per the rule written
+  in iteration 4.
 release_handoff:
 - Candidate version: `0.4.0`
-- Candidate commit: `3ea06c1`
+- Candidate commit: `55a17cf`
 - Supersedes the iteration-2 handoff, which named `085e23e`. That instruction is
   retracted for the same reason the iteration-1 one was: acting on it would ship a build
   that predates the V6 work.
-- **Open question before tagging, added 2026-09-16:** decide what `--variety` does in this
-  release. Three options, in the order this repo would rank them: (a) capture the request
-  and fix or confirm the scale, then tag; (b) hold `--variety` out of `0.4.0` and ship the
-  rest; (c) tag as-is, accepting a documented, probably-capped control. The README states
-  the conflict either way, so (c) is defensible but should be a decision, not an oversight.
-- Human-only action after that decision: create an annotated tag `v0.4.0` at the candidate
+- The `--variety` question raised in iteration 4 is resolved and the flag is fixed. Option
+  (a) was taken: capture first, then correct. Nothing is left open for the tagger to decide.
+- Human-only action after review: create an annotated tag `v0.4.0` at the candidate
   commit, then push that tag. The existing trusted tag workflow performs npm
   publication; do not invoke `npm publish` directly.
-next_step: resolve the `--variety` scale question, then seek explicit human release
-  authorization. The candidate itself is otherwise unchanged and still verified.
-stop_reason: open_question_before_release
+next_step: none; candidate is ready for explicit human release authorization.
+stop_reason: release_candidate_ready
