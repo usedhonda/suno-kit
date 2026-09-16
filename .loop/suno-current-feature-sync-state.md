@@ -1,8 +1,8 @@
 # Current Suno feature compatibility state
 
 status: final
-iteration: 4/4
-research_watermark: 2026-09-12
+iteration: 5 (manual feed; the four-iteration loop budget was already spent)
+research_watermark: 2026-09-16
 
 feature_matrix:
 - feature: Suno V6 release (v6 / v6-wild / v6-mini)
@@ -190,8 +190,20 @@ feature_matrix:
       it to V4.5 / V5, not to v6
   affected_surfaces:
     - knowledge/suno_v6_reference.md ("Maximum song length" row)
-  decision: NOT adopted. Left as unspecified. Recorded here so the next sweep does not
-    re-research it from scratch, and does not adopt it on the report's word alone.
+  decision: NOT adopted at the time. Left as unspecified. Recorded here so the next sweep does
+    not re-research it from scratch, and does not adopt it on the report's word alone.
+  superseded_on: 2026-09-16
+  superseded_by:
+    - https://help.suno.com/en/articles/13924929 - fetched and read directly. It states
+      "Suno can generate up to 8 minutes of music in a single generation across v6, v6-wild,
+      and v6-mini", for one generation, with Extend named for going further.
+  superseded_note: The claim was true and the citation was broken. Article 2409473 does not
+    exist; article 13924929 does, and the 2026-09-16 report supplied it. The original
+    rejection was correct procedure on the evidence then available and still produced the
+    wrong answer, which is precisely why a rejected claim is parked here instead of deleted.
+    Rejecting an unverifiable citation never makes a claim false. Anything sitting in this
+    file with status rejected should be re-tested whenever a new source turns up. Now
+    recorded as confirmed_v6 in knowledge/suno_v6_reference.md.
 - feature: consistency gate C6 cannot see filenames containing digits
   status: observed
   date: 2026-09-11
@@ -244,6 +256,62 @@ feature_matrix:
     than URLs. Every V6 community technique therefore enters as community_experimental
     attributed to the report, never to a thread anyone here has read. Do not upgrade any of
     them on the strength of a later report that cites the same unreachable threads.
+- feature: V6 Variety wire scale
+  status: conflict
+  date: 2026-09-16
+  evidence:
+    - https://github.com/MrDoe/BetterSuno - docs/suno-api-reference.md, fetched and read
+      directly. Documents `control_sliders.aug_creativity` as 0-4 discrete levels
+      (0=off, 1=normal, 2=high, 3=extra, 4=max, V6 models only), added with V6 support on
+      2026-09-14.
+    - the earlier third-party source, already recorded here, reports a 0..1 fraction, which
+      is what suno-cli sends as `variety / 100`.
+  affected_surfaces:
+    - suno-cli/src/create/body.ts (NOT modified)
+    - suno-cli/README.md (warning section added)
+    - knowledge/suno_v6_reference.md (Wire names section)
+    - .loop/suno-cli-release-candidate-state.md (open question before tagging)
+  decision: NOT adopted either way. Two third-party projects disagreeing establishes neither.
+    The net effect on evidence is worth stating precisely - the field NAME is now better
+    supported, since two independent projects agree on `aug_creativity`, while its TYPE is
+    less certain than this repo previously implied. If the 0-4 reading is right, then
+    `--variety 100` sends 1.0 and means "normal", so the flag never reaches the top of its
+    range; only `--variety 0` is identical under both readings. Settle by capture, not
+    argument - the existing `--mint-check` path intercepts and aborts the generate request,
+    so reading the body costs no credits.
+- feature: Custom Models minimum size and rights requirement
+  status: official
+  date: 2026-09-16
+  evidence:
+    - https://help.suno.com/en/articles/11362497 - "as few as six songs"; "You must own the
+      rights to all of the songs you upload to create your custom model."
+  decision: adopted. Which base model version a custom model is fine-tuned from is NOT stated
+    on that page, so that part stays unspecified.
+- feature: My Taste definition versus My Taste model compatibility
+  status: official, partial
+  date: 2026-09-16
+  evidence:
+    - https://help.suno.com/en/articles/11362561 - "My Taste learns about what you're enjoying
+      on Suno", derived from "your listening and creation habits". Model compatibility is
+      absent from the page.
+  decision: the definition is adopted; V6 compatibility stays unspecified. The 2026-09-16
+    report argued My Taste should no longer be treated as V5.5-only. That overstates the
+    official record - a third-party client implements V6 personalization fields, which is
+    evidence of use, not an official compatibility claim. Recorded as both.
+- feature: third-party V6 request fields - duration, personalization, mode switch, wild id
+  status: third-party
+  date: 2026-09-16
+  evidence:
+    - https://github.com/MrDoe/BetterSuno - `duration` 10-360s in 5s steps;
+      `use_personalization` / `do_personalize_lyrics` / `personalization_user_uuid`;
+      `gpt_description_prompt: ""` as a Custom-mode switch; `mv: "chirp-hawk-wild"`.
+  decision: none adopted; all recorded as capture targets. The wild id is the interesting one
+    because this repo already tested it first-hand: the string exists in client state, and
+    both wild generations still came back as `chirp-hawk`. The third party corroborates that
+    the string exists; it does not show a create request carrying it. Note also that
+    `duration` tops out at 360s, six minutes, below the official eight-minute generation
+    ceiling - so an explicit target and the model limit are probably different things, which
+    is inference and is labelled as such.
 iteration_1:
 - Official release notes were read on 2026-08-13 through the current top entries:
   Voices mobile (2026-08-07), Cover Art improvements (2026-07-31), Duration Slider
@@ -348,7 +416,34 @@ iteration_4:
 - Owner decision: the report's own design proposals — an experiment YAML schema, an eight
   axis evaluation, a negative-wording lint, an expanded recipe metadata block — were left
   out. They are the report author's opinion about how the kit should work, not findings.
-next_step: none from this sweep. Open threads, in order of value: the v6-wild request
+iteration_5:
+- Trigger: the owner supplied a third research report, dated 2026-09-16, and asked for the
+  documentation to be brought up to date on everything gathered so far. Manual feed again;
+  the harvest loop remains PAUSED and must not re-append these sections on resume.
+- This report was materially better sourced than the previous two. It cited real URLs on
+  help.suno.com and GitHub rather than internal markers, so most of it could be verified
+  here directly instead of being taken on trust. Only its Reddit material hit the same wall
+  as before.
+- The headline outcome is a reversal, not an addition. The eight-minute generation ceiling,
+  rejected on 2026-09-11 for lack of a working citation, is official. See the superseded_by
+  block on that entry. The lesson is recorded there because it generalises: a rejection on
+  citation grounds parks a claim, it does not refute it.
+- The second outcome is a conflict rather than a fact: the Variety wire scale. Recorded, not
+  resolved, and deliberately not "fixed" in either direction. It now blocks a clean release
+  decision for 0.4.0, which is stated in the release-candidate state file instead of being
+  left for someone to discover after tagging.
+- An internal contradiction in the kit was found and fixed while applying this: migration
+  verdict 11 still grouped Custom Models with Voices / My Taste / Persona as "V6 compatibility
+  not stated", while the V6 reference had already recorded Custom Models as confirmed. The
+  reference was corrected in the previous sweep and the migration file was not. Now split,
+  with the six-song and rights requirements attached.
+- Where the report overreached it was cut back rather than repeated. It argued My Taste should
+  leave the V5.5-only box; the official page it cites names no model compatibility at all, so
+  the definition was adopted and the compatibility claim was not.
+- Not done, by scope: no change to suno-cli runtime behaviour, no adoption of any third-party
+  wire value, no mygpts edits.
+next_step: resolve the Variety wire scale by capturing a real generate request, which also
+  unblocks the 0.4.0 release decision. Then, in order of value: the v6-wild request
   parameter still needs a captured generate request; the `aug_creativity` wire name needs
   first-party confirmation before it should be trusted; the Suno Create screen path in
   agent/suno_flow_style_extract.md needs a human to look at the current UI.
