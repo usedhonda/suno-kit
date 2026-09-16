@@ -276,7 +276,7 @@ function parseArgs(argv: string[]): ParsedArgs {
       result.tokenProvider = parseTokenProviderFlag(argv[index + 1]);
       index += 1;
     } else if (arg === "--variety") {
-      result.variety = parsePercentFlag("--variety", argv[index + 1]);
+      result.variety = parseVarietyLevelFlag(argv[index + 1]);
       index += 1;
     } else if (arg === "--max-mode") {
       result.maxMode = true;
@@ -344,7 +344,7 @@ function usage(): void {
       "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",
-      "advanced create: [--exclude <text>] [--model <name>] [--variety 0-100] [--max-mode] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]",
+      "advanced create: [--exclude <text>] [--model <name>] [--variety 0-4] [--max-mode] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]",
       "advanced auth/live: [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--captcha-token <token> --token-provider <integer>] [--cdp-endpoint <loopback-url>]"
     ]
   });
@@ -356,6 +356,19 @@ function parsePercentFlag(flag: string, value: string | undefined): number {
     throw new Error(`Usage: ${flag} must be a number from 0 to 100.`);
   }
   return parsed / 100;
+}
+
+// Variety is not a percentage. Captured from the web client on 2026-09-16: the slider runs
+// 0..4 and the request carries that integer as `aug_creativity`. The other three sliders in
+// the same object are fractions, which is why they keep parsePercentFlag.
+function parseVarietyLevelFlag(value: string | undefined): number {
+  const parsed = Number(value);
+  if (value === undefined || !Number.isInteger(parsed) || parsed < 0 || parsed > 4) {
+    throw new Error(
+      "Usage: --variety must be an integer level from 0 to 4 (0=off, 1=normal, 2=high, 3=extra, 4=max)."
+    );
+  }
+  return parsed;
 }
 
 function parseNonEmptyStringFlag(flag: string, value: string | undefined): string {

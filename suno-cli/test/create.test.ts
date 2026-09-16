@@ -52,8 +52,20 @@ test("buildCreateBody carries variety and max mode only when asked", () => {
   // control, so it has to survive as 0 rather than be dropped as falsy.
   assert.deepEqual(tuned.control_sliders, { aug_creativity: 0 });
 
-  const scaled = buildCreateBody({ ...base, variety: 50 }).metadata as Record<string, unknown>;
-  assert.deepEqual(scaled.control_sliders, { aug_creativity: 0.5 });
+  const topLevel = buildCreateBody({ ...base, variety: 4 }).metadata as Record<string, unknown>;
+  assert.deepEqual(topLevel.control_sliders, { aug_creativity: 4 });
+
+  // Captured from the web client on 2026-09-16: one control_sliders object genuinely mixes
+  // scales. Variety travels as the integer level shown in the UI, while the other three
+  // arrive here already divided by 100 -- a UI value of 51 goes out as 0.51. Guard both
+  // halves together so neither ever gets "corrected" into the other's shape.
+  const mixed = buildCreateBody({ ...base, variety: 3, weirdness: 0.51, styleInfluence: 0.51 })
+    .metadata as Record<string, unknown>;
+  assert.deepEqual(mixed.control_sliders, {
+    weirdness_constraint: 0.51,
+    style_weight: 0.51,
+    aug_creativity: 3
+  });
 });
 
 test("buildCreateBody resolves model aliases and defaults to v6", () => {

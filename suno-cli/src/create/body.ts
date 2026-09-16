@@ -13,6 +13,7 @@ export interface CreateInput {
   tokenProvider?: string | number | null;
   weirdness?: number;
   styleInfluence?: number;
+  // Integer level 0-4, not a percentage. See the capture note at the assignment below.
   variety?: number;
   maxMode?: boolean;
   personaId?: string;
@@ -109,14 +110,21 @@ export function buildCreateBody(input: CreateInput): CreateBody {
   if (input.weirdness !== undefined) controlSliders.weirdness_constraint = input.weirdness;
   if (input.styleInfluence !== undefined) controlSliders.style_weight = input.styleInfluence;
   if (input.audioInfluence !== undefined) controlSliders.audio_weight = input.audioInfluence;
-  // Variety itself is documented: Suno says it varies output by adjusting and updating
-  // the style prompt, and that lowering it to zero retains full control of the style
-  // tags. The WIRE NAME below is not. `aug_creativity`, and its 0..1 scale, come from a
-  // third-party observation of the web client -- this repo has never seen it first-hand,
-  // unlike the model identifiers it records. Re-verify against a live request before
-  // relying on it, and treat a rejected create with --variety as this line's fault
-  // first. The same caution is why no v6-wild alias exists.
-  if (input.variety !== undefined) controlSliders.aug_creativity = input.variety / 100;
+  // Variety is documented by Suno: it varies output by adjusting and updating the style
+  // prompt, and lowering it to zero retains full control of the style tags. The wire shape
+  // was CAPTURED FIRST-HAND on 2026-09-16 from the web client's POST to
+  // /api/generate/v2-web/. Variety is an integer LEVEL, not a fraction: its slider reports
+  // aria-valuemin 0 and aria-valuemax 4, and at level 3 the request carried
+  // `aug_creativity: 3`. Levels are 0=off, 1=normal, 2=high, 3=extra, 4=max.
+  //
+  // The same capture showed the three sliders above really are fractions -- a UI value of
+  // 51 went out as `weirdness_constraint: 0.51` and `style_weight: 0.51` -- so this one
+  // object genuinely mixes scales, and the divide-by-100 those flags do is correct.
+  // Do not "fix" them to match this line, or this line to match them.
+  //
+  // This replaced `input.variety / 100`, which came from a third-party 0..1 claim and
+  // capped the control near the bottom of its range: --variety 100 sent 1.0, i.e. "normal".
+  if (input.variety !== undefined) controlSliders.aug_creativity = input.variety;
   if (Object.keys(controlSliders).length > 0) metadata.control_sliders = controlSliders;
   const body: CreateBody = {
     tags: input.style,

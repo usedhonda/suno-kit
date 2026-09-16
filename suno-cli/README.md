@@ -104,7 +104,7 @@ Useful optional controls:
 |---|---|
 | `--exclude <text>` | Styles or sounds to avoid |
 | `--model <name>` | Generation model. Defaults to `v6`. Free accounts should pass `v6-mini`. `v5.5` and every earlier model were retired by Suno on 2026-09-09 — the alias still resolves, but Suno decides whether it accepts the request |
-| `--variety <0-100>` | V6 Variety. Suno varies the output by adjusting and updating your style prompt, so pass `0` to keep an engineered Style under direct control. ⚠️ **The scale is disputed — see the warning below.** `0` means "off" under every reading, so it is the one value you can pass with confidence |
+| `--variety <0-4>` | V6 Variety level: `0` off, `1` normal, `2` high, `3` extra, `4` max — the same five stops the web UI offers. Suno varies the output by adjusting and updating your style prompt, so pass `0` to keep an engineered Style under direct control |
 | `--max-mode` | V6 Max Mode. Spends more on the generation. Suno recommends it for songs longer than two minutes, covers meant to stay close to the original, style transfer, and keeping vocals and style consistent through the whole track. Costs more credits |
 | `--vocal-gender m|f` | Vocal gender hint |
 | `--weirdness <0-100>` | Suno weirdness slider |
@@ -118,22 +118,19 @@ Cover mode uses an existing Suno clip id. Uploading external audio is not implem
 
 `--model` only recognizes a couple of known aliases; any other value is passed through to Suno as-is, so a new model can be tried with `--model <raw identifier>` as soon as its identifier is known.
 
-### `--variety`: the wire scale is unresolved
+### Why the sliders use two different scales
 
-The Variety control itself is official and documented by Suno. What is **not** settled is the number the request actually carries.
+`metadata.control_sliders` mixes scales inside one object. That looks like a bug and is not — it is what the web client sends. Captured directly from a Suno create request on 2026-09-16:
 
-Two independent third-party projects name the same field, `metadata.control_sliders.aug_creativity`, and disagree about its type:
+| Control | Value in the UI | Sent on the wire as |
+|---|---|---|
+| Weirdness | 51 | `weirdness_constraint: 0.51` |
+| Style Influence | 51 | `style_weight: 0.51` |
+| Variety | 3 | `aug_creativity: 3` |
 
-- one reports a normalised `0..1` fraction — which is what this CLI sends today, as `variety / 100`
-- another, updated for V6 on 2026-09-14, documents discrete integers `0..4`, where `0=off, 1=normal, 2=high, 3=extra, 4=max`
+So `--weirdness`, `--style-influence` and `--audio-influence` take `0-100` and are divided by 100 before sending, while `--variety` takes a level `0-4` and is sent unchanged. Suno's own Variety slider reports a range of 0 to 4, with level 2 labelled "High".
 
-Neither has been reproduced first-hand by this project. **If the second reading is right, `--variety 100` sends `1.0`, which would mean "normal" rather than "max"**, and the flag would never reach the top of its range. `--variety 0` means "off" under both readings.
-
-The CLI has deliberately not been changed on the strength of one third-party project contradicting another. Until a captured request settles it:
-
-- `--variety 0` is the one value you can pass with confidence, and it is the right value for prompt A/B work
-- treat any other value as experimental and confirm the audible effect yourself
-- do not build a preset or a script around a specific mid-range number
+This CLI used to divide Variety by 100 as well, following a third-party report. That was wrong: `--variety 100` sent `1.0`, which is level 1, "normal" — the flag could never reach the top of its range. It was corrected once the real request was captured. If you scripted around the old behaviour, `--variety` now takes `0-4` and rejects anything else.
 
 ## Headless Login
 
