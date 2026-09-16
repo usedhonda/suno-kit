@@ -96,6 +96,29 @@ deliberately), set Variety to zero. Otherwise you cannot tell your change from S
   Existing ones carry over — "Any custom models you've created will automatically get upgraded so
   that v6 powers your model moving forward. Songs created with your old v5.5 custom model will
   still be available, playable and unaffected by the v6 update."
+  The Custom Models help page (read 2026-09-16) adds two hard numbers: it takes "as few as six
+  songs", and "You must own the rights to all of the songs you upload to create your custom
+  model." Which base model version a custom model is built from is **not** stated there.
+
+### Maximum song length — `confirmed_v6`
+
+> "Suno can generate up to 8 minutes of music in a single generation across v6, v6-wild, and
+> v6-mini"
+
+Eight minutes is the ceiling for **one generation**, not a lifetime cap on a song — the same page
+points at Extend for going further. It applies to all three V6 models, with no separate figure for
+`v6-mini`.
+
+⚠️ **This entry supersedes a rejection.** On 2026-09-11 this kit recorded the 8-minute figure as
+*rejected* because the report that carried it cited an article that returned 404, the number was
+absent from the FAQ and Current Models pages, and search results attributed 8 minutes to V4.5/V5.
+That rejection was the right call on the evidence available and still the wrong answer: the claim
+was true and the citation was broken. A later report supplied a working article, which was read
+directly. **Rejecting an unverifiable citation never makes the claim false** — it only parks it.
+Anything parked this way is worth re-testing when a new source appears.
+
+Generating up to eight minutes is not the same as eight minutes of *stable* output. Community
+reports of drift past the four-minute mark live under *Community findings*.
 
 ### Wire names for these controls — **third-party, not observed here**
 
@@ -108,12 +131,45 @@ because the owner asked for the controls, and the code says plainly that the nam
 Re-verify against a live request before trusting them. This is the same standard that keeps
 `v6-wild` without an alias.
 
+#### The Variety scale is now actively disputed — 2026-09-16
+
+A second third-party project, BetterSuno, added V6 support on 2026-09-14 and documents the **same
+field with a different type**. Its API reference was fetched and read directly:
+
+```
+| control_sliders.aug_creativity | 0-4 | V6 Variety level:
+  0=off, 1=normal, 2=high, 3=extra, 4=max (only V6 models) |
+```
+
+Discrete integers, not a normalised fraction. `suno-cli` currently sends `variety / 100`, i.e.
+`0.0..1.0`. **If BetterSuno is right, `--variety 100` sends `1.0`, which would be "normal" rather
+than "max"** — the flag would be quietly capped near the bottom of its range. `--variety 0` happens
+to mean "off" under both readings.
+
+Do **not** switch to 0..4 on this. Two third-party projects disagreeing does not make the louder
+one correct, and neither has been reproduced here. **The field name is now better supported than
+before** — two independent projects name `aug_creativity` — while **its type is less certain than
+the kit previously implied.** Both statements are recorded as such.
+
+This is decided by capture, not by argument: set Variety to each level in a logged-in browser and
+compare the `generate` request bodies. Until then the flag stays as it is and stays flagged.
+
+#### Other fields the same project reports — capture targets, not adopted
+
+| Field | Reported shape | Why it is not adopted |
+|---|---|---|
+| `duration` | seconds, 10-360, 5-second steps, omit for auto | Third-party only. Note 360 s is six minutes, below the official eight-minute generation ceiling, so an explicit target and the model's limit are probably different things — that reading is inference, not documentation |
+| `use_personalization`, `do_personalize_lyrics`, `personalization_user_uuid` | booleans plus a uuid, for My Taste | Third-party only. Official pages still name no V6 compatibility for My Taste |
+| `gpt_description_prompt: ""` | empty string keeps Custom mode | Third-party only, and an omitted key versus an empty string is exactly the kind of difference a capture settles |
+| `mv: "chirp-hawk-wild"` | the `v6-wild` identifier | **Contradicted by first-party testing here** — see *Why `v6-wild` has no identifier of its own*. This kit already found that string in client state and still saw both wild generations come back as `chirp-hawk`. The report corroborates that the string exists; it does not show a create request carrying it |
+
 ---
 
 ## Not stated by Suno — `unspecified`
 
-As of **2026-09-11**, none of the following appear in Suno's V6 blog post, release notes,
-Current Models page, or the v6 FAQ — all four were read directly, not summarised from a report.
+As of **2026-09-16**, none of the following appear in Suno's V6 blog post, release notes,
+Current Models page, the v6 FAQ, the song-length article, the Custom Models article or the My Taste
+article — all were read directly, not summarised from a report.
 **Do not fill these in with guesses, and do not copy them from third-party API wrappers.**
 
 | Item | Status |
@@ -125,10 +181,9 @@ Current Models page, or the v6 FAQ — all four were read directly, not summaris
 | Context window | unspecified |
 | System prompt | unspecified |
 | Embedding API | unspecified |
-| Duration Slider on V6 | unspecified — the slider shipped 2026-07-20 for **V5.5 / Web only** |
-| Maximum song length | unspecified |
+| Duration Slider on V6 | unspecified — the slider shipped 2026-07-20 for **V5.5 / Web only**. A third-party client reports an explicit `duration` field; see *Wire names* |
 | Weirdness / Style Influence / Audio Influence semantics on V6 | unspecified — do not assume V5.5 behaviour carries over |
-| Voices / My Taste / Persona compatibility | unspecified for V6 specifically — **Custom Models are the exception and are confirmed**, see Generation controls above. Do not treat the four as one group |
+| Voices / My Taste / Persona compatibility | unspecified for V6 specifically — **Custom Models are the exception and are confirmed**, see Generation controls above. Do not treat the four as one group. My Taste's own help page (read 2026-09-16) defines it — "My Taste learns about what you're enjoying on Suno" from "your listening and creation habits" — but names **no model compatibility at all**, so V6 support is still not an official claim. A third-party client implements V6 personalization fields; see *Wire names* |
 | Output codec / sample rate / bitrate | unspecified |
 | Image / video / audio input limits, formats, counts | unspecified |
 
@@ -328,11 +383,13 @@ Per-rule verdicts: see `v55_to_v6_migration.md`.
 
 Everything below is `community_experimental` until this kit reproduces it.
 
-**Provenance, stated once for the whole section.** These entries come from a research report dated
-2026-09-12 that summarised Reddit threads posted 2026-09-09..09-12. **The threads themselves were
-not retrieved** — Reddit blocks this kit's fetcher — so the attribution is to the report, not to a
-thread anyone here has read. Thread titles, dates and handles are kept so a human can find the
-originals and check them.
+**Provenance, stated once for the whole section.** These entries come from two research reports,
+dated 2026-09-12 and 2026-09-16, which between them summarise Reddit threads posted
+2026-09-09..09-16. **The threads themselves were not retrieved** — Reddit blocks this kit's
+fetcher — so the attribution is to the reports, not to a thread anyone here has read. Thread
+titles, dates and handles are kept so a human can find the originals and check them. Where the
+same reports made official or third-party claims, those were fetched and read directly instead,
+and they live in the confirmed sections above rather than here.
 
 Semantic instruction stays primary (see *Carrying V5.5 technique into V6*). Nothing here promotes
 tags back to a primary control: every tag entry is a recovery move to A/B, never a default.
@@ -382,6 +439,17 @@ there now. A/B it rather than assuming either side is right.
   keep to 8-14 words for older-model texture; or ignore length entirely and order the content by
   musical hierarchy (genre, vocal, drums, guitars, bass, arrangement, production, ending). Treat
   these as three profiles to benchmark, not as a rule.
+- **Give each genre in a fusion a job.** Instead of listing `folktronica, EDM, cinematic folk`,
+  name one primary identity and say what each other genre contributes — the sub-bass pulse, the
+  plucked lead texture — and what it must not take over. This is the kit's existing "write the
+  relationships between attributes" rule applied to fusion specifically. Reported 2026-09-15.
+- **Compile an old prompt rather than discarding it.** Write the V5.5-era Style as you always did,
+  then have a language model convert it into a V6 production brief: one primary identity, a job
+  for each secondary genre, instruments as performance behaviour, groove stated apart from BPM,
+  the vocalist described as a performer, section contrast, instrument hierarchy, mix hierarchy.
+  Delete any clause that would not change a musical decision. Reported 2026-09-16. Caveat: the
+  headings in such a template are for the language model's benefit — **Suno guarantees no literal
+  syntax here**, so do not let a template harden into invented tags.
 
 ### Workflow — `community_experimental`
 
@@ -401,6 +469,38 @@ there now. A/B it rather than assuming either side is right.
   buildup, vocal count creeping upward, and section resets getting weaker. One controlled test
   found arrangement density partly stochastic — identical prompt and settings produced both sparse
   and muddy takes — so judge a recipe by its success rate across takes, never by one good result.
+
+**The 2026-09-16 report adds a different kind of move: change the route, not the prompt.**
+
+- **Simple and Advanced are different paths, not skill levels.** Suno says Simple Mode decides the
+  workflow for you (see *Generation controls*), so the same brief can come out differently in each.
+  One tester found a detailed brief that was technically correct but emotionally flat in Advanced
+  became more expressive in Simple; another found Simple rewrote supplied lyrics and had to switch
+  back to Advanced to keep them intact. The usable reading is a routing rule, not a winner:
+  **exact lyrics or structure go to Advanced / Custom; open interpretation can try Simple.**
+  Reported 2026-09-14.
+- **Escalate by route before rewriting.** If a take fails, hold the prompt fixed and change one
+  route at a time — mode first, then model variant. It separates "the prompt was wrong" from "that
+  path was wrong", which rewriting cannot. This is the V6-shaped replacement for the V5.5 habit of
+  editing the prompt and re-rolling the same model.
+- **`v6-mini` as a specialist fallback.** One report had flagship `v6` miss a 1950s-60s
+  double-snare backbeat that `v6-mini` caught on the same prompt and tags. Single anecdote — it
+  does not make mini better at rhythm. It does suggest the family is not a plain quality ladder,
+  so a smaller sibling is worth one A/B on a specific failure. Reported 2026-09-14.
+- **Three layers of context, if you use My Taste.** One tester kept the band's enduring identity in
+  My Taste, only song-specific conditions in Style, and section-local performance direction inside
+  the lyrics, and reported a much higher share of usable takes. Note the reproducibility cost:
+  My Taste is personalization that keeps learning, so a My Taste generation is **not reproducible
+  from the prompt alone**. Benchmark with it off; use it for final work. Reported 2026-09-14.
+- **Checkpoint long songs around four minutes.** Eight minutes is generatable (see *Maximum song
+  length*), but drift past roughly 4:15 was reported, Max Mode included. Score the back half
+  separately rather than judging a long take as one object; if a genre keeps failing after the
+  checkpoint, prefer Extend or local edit over one long generation. Reported 2026-09-15.
+- **Some failures do not answer to prompting at all.** A 2026-09-16 report describes changing
+  genre wording, production language, structure, settings and arrangement instructions and still
+  converging on the same strong kick and snare, the same late percussion escalation, the same
+  sparse arrangement. Treat that as its own failure class: when varied prompts collapse to one
+  output, stop rewriting and change route, model, or approach.
 
 ---
 
@@ -464,5 +564,11 @@ above are not.
 | Independent | https://huggingface.co/m-a-p/YuE2-3B (YuE2-3B model card) | read 2026-09-12 | WildSongBench figures and its candidate-selection caveat |
 | Community | Research report 2026-09-12, summarising Reddit threads 2026-09-09..09-12 | 2026-09-12 | Everything under *Community findings*. Threads not retrieved — Reddit blocks this kit's fetcher |
 
-Last verified against source: **2026-09-12**.
+| Official | https://help.suno.com/en/articles/13924929 (song length) | read 2026-09-16 | Eight-minute ceiling for one generation across v6, v6-wild and v6-mini |
+| Official | https://help.suno.com/en/articles/11362497 (Custom Models) | read 2026-09-16 | Six-song minimum, and the requirement to own the rights to every uploaded song |
+| Official | https://help.suno.com/en/articles/11362561 (My Taste) | read 2026-09-16 | What My Taste is and what it learns from. Names no model compatibility |
+| Third-party | https://github.com/MrDoe/BetterSuno — `docs/suno-api-reference.md` | read 2026-09-16 | The disputed 0-4 Variety scale, plus the duration and personalization fields listed as capture targets. Not adopted |
+| Community | Research report 2026-09-16, summarising Reddit threads 2026-09-14..09-16 | 2026-09-16 | The route-before-prompt entries under *Community findings*. Threads not retrieved |
+
+Last verified against source: **2026-09-16**.
 Re-verify after any Suno model update — V6 is a closed, server-side model and may change silently.
