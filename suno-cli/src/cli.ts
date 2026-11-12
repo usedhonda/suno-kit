@@ -49,6 +49,7 @@ interface ParsedArgs {
   coverStartS?: number | undefined;
   coverEndS?: number | undefined;
   audioInfluence?: number | undefined;
+  duration?: number | undefined;
   sessionToken?: string | undefined;
   userTier?: string | undefined;
   runId?: string | undefined;
@@ -158,6 +159,7 @@ async function runCreate(args: ParsedArgs): Promise<number> {
   if (args.coverStartS !== undefined) Object.assign(createOptions, { coverStartS: args.coverStartS });
   if (args.coverEndS !== undefined) Object.assign(createOptions, { coverEndS: args.coverEndS });
   if (args.audioInfluence !== undefined) Object.assign(createOptions, { audioInfluence: args.audioInfluence });
+  if (args.duration !== undefined) Object.assign(createOptions, { durationSeconds: args.duration });
   const sessionToken = args.sessionToken ?? process.env.SUNO_CREATE_SESSION_TOKEN;
   const userTier = args.userTier ?? process.env.SUNO_USER_TIER;
   if (sessionToken) Object.assign(createOptions, { sessionToken });
@@ -301,6 +303,9 @@ function parseArgs(argv: string[]): ParsedArgs {
     } else if (arg === "--audio-influence") {
       result.audioInfluence = parsePercentFlag("--audio-influence", argv[index + 1]);
       index += 1;
+    } else if (arg === "--duration") {
+      result.duration = parseDurationSecondsFlag(argv[index + 1]);
+      index += 1;
     } else if (arg === "--session-token") {
       result.sessionToken = parseNonEmptyStringFlag("--session-token", argv[index + 1]);
       index += 1;
@@ -344,7 +349,7 @@ function usage(): void {
       "suno-cli status <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli urls <run-id|clip-id|song-url> [--json] [--data-dir <dir>] [--cookie-file <file>] [--jwt <token>]",
       "suno-cli download <run-id|clip-id|song-url> --out <dir> [--timeout-ms <ms>] [--poll-ms <ms>] [--jwt <token>]",
-      "advanced create: [--exclude <text>] [--model <name>] [--variety 0-4] [--max-mode] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]",
+      "advanced create: [--exclude <text>] [--model <name>] [--variety 0-4] [--max-mode] [--weirdness 0-100] [--style-influence 0-100] [--audio-influence 0-100] [--duration 10-360] [--persona-id <id>] [--cover-clip-id <id> --cover-start-s <sec> --cover-end-s <sec>]",
       "advanced auth/live: [--jwt <token>] [--session-token <token>] [--user-tier <uuid>] [--captcha-token <token> --token-provider <integer>] [--cdp-endpoint <loopback-url>]"
     ]
   });
@@ -388,6 +393,18 @@ function parseNonNegativeNumberFlag(flag: string, value: string | undefined): nu
   const parsed = Number(value);
   if (value === undefined || !Number.isFinite(parsed) || parsed < 0) {
     throw new Error(`Usage: ${flag} must be a non-negative number.`);
+  }
+  return parsed;
+}
+
+// Bounds captured 2026-09-27 from the web client's own Duration slider (Advanced >
+// More Options, Custom mode): aria-valuemin=10, aria-valuemax=360, in whole seconds.
+// Rejecting outside that range here fails fast instead of spending a credit on a
+// request Suno would refuse anyway.
+function parseDurationSecondsFlag(value: string | undefined): number {
+  const parsed = Number(value);
+  if (value === undefined || !Number.isInteger(parsed) || parsed < 10 || parsed > 360) {
+    throw new Error("Usage: --duration must be an integer number of seconds from 10 to 360.");
   }
   return parsed;
 }

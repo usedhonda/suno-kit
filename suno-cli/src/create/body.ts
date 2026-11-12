@@ -23,6 +23,14 @@ export interface CreateInput {
   audioInfluence?: number;
   sessionToken?: string;
   userTier?: string;
+  // Seconds. Captured 2026-09-27 from the web client's own Advanced > More Options >
+  // Duration control (Custom mode): an ARIA slider with aria-valuemin=10,
+  // aria-valuemax=360, default aria-valuenow=180 (displayed "3:00"), available on
+  // v6-mini with no visible paid lock. Sent top-level as `duration`, matching the
+  // `"duration": null` field already observed on the wire (paperfoot/suno-cli issue
+  // #10). Omitting the flag keeps the request byte-identical to what it has always
+  // been (duration stays absent, i.e. "Auto"), so no existing run-id hash moves.
+  durationSeconds?: number;
 }
 
 export interface CreateBody {
@@ -50,6 +58,7 @@ export interface CreateBody {
   artist_end_s: null;
   user_uploaded_images_b64: null;
   generation_type: "TEXT";
+  duration?: number;
 }
 
 // Observed 2026-09-10 from a first-party logged-in session, two independent ways:
@@ -149,6 +158,7 @@ export function buildCreateBody(input: CreateInput): CreateBody {
     user_uploaded_images_b64: null,
     generation_type: "TEXT"
   };
+  if (input.durationSeconds !== undefined) body.duration = input.durationSeconds;
   if (input.coverClipId) {
     body.task = "cover";
     if (input.coverStartS !== undefined) body.cover_start_s = input.coverStartS;

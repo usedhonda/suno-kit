@@ -106,6 +106,7 @@ export async function createCommand(options: CreateCommandOptions): Promise<numb
   if (completedOptions.coverStartS !== undefined) bodyInput.coverStartS = completedOptions.coverStartS;
   if (completedOptions.coverEndS !== undefined) bodyInput.coverEndS = completedOptions.coverEndS;
   if (completedOptions.audioInfluence !== undefined) bodyInput.audioInfluence = completedOptions.audioInfluence;
+  if (completedOptions.durationSeconds !== undefined) bodyInput.durationSeconds = completedOptions.durationSeconds;
   if (completedOptions.sessionToken) bodyInput.sessionToken = completedOptions.sessionToken;
   if (completedOptions.userTier) bodyInput.userTier = completedOptions.userTier;
   const body = buildCreateBody(bodyInput);

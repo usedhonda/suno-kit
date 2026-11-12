@@ -223,6 +223,45 @@ test("create dry-run combines weirdness style and audio sliders", async () => {
   assert.equal(sliders.audio_weight, 0.25);
 });
 
+test("create dry-run maps duration to top-level seconds field", async () => {
+  const tempDir = await fsTempDir();
+  const output = await captureStdout(() => cliMain([
+    ...baseCreateArgs(tempDir, "run_duration"),
+    "--duration", "30"
+  ]));
+  assert.equal(output.code, 0);
+  assert.equal(output.json.body.duration, 30);
+});
+
+test("create dry-run omits duration when unspecified", async () => {
+  const tempDir = await fsTempDir();
+  const output = await captureStdout(() => cliMain(baseCreateArgs(tempDir, "run_no_duration")));
+  assert.equal(output.code, 0);
+  assert(!("duration" in output.json.body));
+});
+
+test("create dry-run rejects duration outside 10-360 seconds", async () => {
+  const tempDir = await fsTempDir();
+  const low = await captureStdout(() => cliMain([
+    ...baseCreateArgs(tempDir, "run_duration_low"),
+    "--duration", "5"
+  ]));
+  const high = await captureStdout(() => cliMain([
+    ...baseCreateArgs(tempDir, "run_duration_high"),
+    "--duration", "361"
+  ]));
+  const fractional = await captureStdout(() => cliMain([
+    ...baseCreateArgs(tempDir, "run_duration_fractional"),
+    "--duration", "30.5"
+  ]));
+  assert.equal(low.code, 2);
+  assert.match(low.json.error, /--duration/);
+  assert.equal(high.code, 2);
+  assert.match(high.json.error, /--duration/);
+  assert.equal(fractional.code, 2);
+  assert.match(fractional.json.error, /--duration/);
+});
+
 test("create body omits control_sliders when sliders are unspecified", () => {
   const body = buildCreateBody({
     title: "verify probe",

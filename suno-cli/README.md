@@ -110,6 +110,7 @@ Useful optional controls:
 | `--weirdness <0-100>` | Suno weirdness slider |
 | `--style-influence <0-100>` | Suno style influence slider |
 | `--audio-influence <0-100>` | Suno audio influence slider |
+| `--duration <10-360>` | Song length in whole seconds (the web UI's Advanced > More Options > Duration, Custom mode). Omit for Auto (~3 min). Works on `v6-mini` |
 | `--persona-id <id>` | Use an existing Suno persona |
 | `--cover-clip-id <id>` | Cover an existing Suno clip |
 | `--cover-start-s <sec>` / `--cover-end-s <sec>` | Cover range in seconds; requires `--cover-clip-id` |
